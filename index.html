@@ -104,67 +104,211 @@
     </table>
 </div>
 
-    <div id="onsite" class="content">
-        <h1>On Site Containers</h1>
-        <table>
-            <thead>
-                <tr>
-                    <th>Booth</th>
-                    <th>Rego</th>
-                    <th>Shipping Line</th>
-                    <th>ISO</th>
-                    <th>Grade</th>
-                    <th>Door Direction</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>B001</td>
-                    <td>ABC-123</td>
-                    <td>Maersk</td>
-                    <td>42G1</td>
-                    <td>A</td>
-                    <td>Right Swing</td>
-                </tr>
-                <tr>
-                    <td>B002</td>
-                    <td>XYZ-456</td>
-                    <td>CMA CGM</td>
-                    <td>22G1</td>
-                    <td>B</td>
-                    <td>Left Swing</td>
-                </tr>
-                <tr>
-                    <td>B003</td>
-                    <td>DEF-789</td>
-                    <td>Evergreen</td>
-                    <td>45G1</td>
-                    <td>A</td>
-                    <td>Both Ends</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+<div id="onsite" class="content">
+    <h1>On Site Containers</h1>
+    
+    <button id="addNewBtn" style="padding:10px 20px; font-size:16px; margin-bottom:20px; background:#007bff; color:white; border:none; border-radius:4px; cursor:pointer;">
+        + Add New Container
+    </button>
 
-    <div id="history" class="content">
-        <h1>History</h1>
-        <p>Old containers go here when they leave or some shit. Empty for now.</p>
+    <table id="onsiteTable">
+        <thead>
+            <tr>
+                <th>Release Number</th>
+                <th>Shipping Line</th>
+                <th>ISO</th>
+                <th>Grade</th>
+                <th>Carrier</th>
+                <th>Rego</th>
+                <th>Door Direction</th>
+                <th>Notes</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="onsiteBody">
+            <!-- Rows injected by JS -->
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal -->
+<div id="addModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); justify-content:center; align-items:center;">
+    <div style="background:white; padding:30px; border-radius:8px; width:90%; max-width:600px;">
+        <h2 style="margin-top:0;">Add New On-Site Container</h2>
+        <form id="onsiteForm">
+            <table style="width:100%;">
+                <tr><td><label>Release Number</label></td><td><input type="text" id="release" required></td></tr>
+                <tr><td><label>Shipping Line</label></td><td><input type="text" id="shippingline" required></td></tr>
+                <tr><td><label>ISO</label></td><td><input type="text" id="iso" required></td></tr>
+                <tr><td><label>Grade</label></td><td><input type="text" id="grade" required></td></tr>
+                <tr><td><label>Carrier</label></td><td><input type="text" id="carrier" required></td></tr>
+                <tr><td><label>Rego</label></td><td><input type="text" id="rego" required></td></tr>
+                <tr><td><label>Door Direction</label></td>
+                    <td>
+                        <select id="doorDirection" required>
+                            <option value="">Select...</option>
+                            <option>Left Swing</option>
+                            <option>Right Swing</option>
+                            <option>Both Ends</option>
+                            <option>Open Side</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="text-align:right; padding-top:20px;">
+                        <button type="button" id="cancelBtn">Cancel</button>
+                        <button type="submit" style="background:#28a745; color:white; padding:8px 16px; border:none; border-radius:4px;">Add to On Site</button>
+                    </td>
+                </tr>
+            </table>
+        </form>
     </div>
+</div>
+<div id="history" class="content">
+    <h1>History</h1>
+    <table id="historyTable">
+        <thead>
+            <tr>
+                <th>Release Number</th>
+                <th>Shipping Line</th>
+                <th>ISO</th>
+                <th>Grade</th>
+                <th>Carrier</th>
+                <th>Rego</th>
+                <th>Door Direction</th>
+                <th>Notes</th>
+                <th>Completed At</th>
+            </tr>
+        </thead>
+        <tbody id="historyBody">
+            <!-- Rows injected by JS -->
+        </tbody>
+    </table>
+</div>
 
     <script>
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                // Remove active from all
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
-                
-                // Add active to clicked
-                tab.classList.add('active');
-                const target = document.getElementById(tab.dataset.tab);
-                target.classList.add('active');
+    // On Site logic
+    let onsite = JSON.parse(localStorage.getItem('onsite') || '[]');
+    let bookings = JSON.parse(localStorage.getItem('bookings') || '[]');
+    let history = JSON.parse(localStorage.getItem('history') || '[]');
+
+    function renderOnsite() {
+        const tbody = document.getElementById('onsiteBody');
+        tbody.innerHTML = '';
+        onsite.forEach((entry, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${entry.release}</td>
+                <td>${entry.shippingline}</td>
+                <td>${entry.iso}</td>
+                <td>${entry.grade}</td>
+                <td>${entry.carrier}</td>
+                <td>${entry.rego}</td>
+                <td>${entry.doorDirection}</td>
+                <td><input type="text" value="${entry.notes || ''}" data-index="${index}" class="notesInput" style="width:100%; padding:5px;"></td>
+                <td><button class="completeBtn" data-index="${index}" style="background:${entry.notes ? '#dc3545' : '#ccc'}; color:white; border:none; padding:5px 10px; border-radius:4px;" ${entry.notes ? '' : 'disabled'}>Complete</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        // Event listeners for notes
+        document.querySelectorAll('.notesInput').forEach(input => {
+            input.addEventListener('input', (e) => {
+                const idx = e.target.dataset.index;
+                onsite[idx].notes = e.target.value.trim();
+                localStorage.setItem('onsite', JSON.stringify(onsite));
+                const btn = e.target.closest('tr').querySelector('.completeBtn');
+                btn.disabled = !onsite[idx].notes;
+                btn.style.background = onsite[idx].notes ? '#dc3545' : '#ccc';
             });
         });
-    </script>
+
+        // Complete buttons
+        document.querySelectorAll('.completeBtn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = e.target.dataset.index;
+                const completed = { ...onsite[idx], completedAt: new Date().toLocaleString() };
+                history.push(completed);
+                localStorage.setItem('history', JSON.stringify(history));
+                onsite.splice(idx, 1);
+                localStorage.setItem('onsite', JSON.stringify(onsite));
+                renderOnsite();
+                if (document.getElementById('history').classList.contains('active')) renderHistory();
+            });
+        });
+    }
+
+    // Auto-populate on blur
+    document.getElementById('release').addEventListener('blur', () => {
+        const rel = document.getElementById('release').value.trim();
+        const match = bookings.find(b => b.release === rel);
+        if (match) {
+            document.getElementById('shippingline').value = match.shippingline;
+            document.getElementById('iso').value = match.iso;
+            document.getElementById('grade').value = match.grade;
+            document.getElementById('carrier').value = match.carrier;
+        }
+    });
+
+    // Modal controls
+    document.getElementById('addNewBtn').addEventListener('click', () => {
+        document.getElementById('addModal').style.display = 'flex';
+    });
+
+    document.getElementById('cancelBtn').addEventListener('click', () => {
+        document.getElementById('addModal').style.display = 'none';
+        document.getElementById('onsiteForm').reset();
+    });
+
+    document.getElementById('onsiteForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const newEntry = {
+            release: document.getElementById('release').value.trim(),
+            shippingline: document.getElementById('shippingline').value.trim(),
+            iso: document.getElementById('iso').value.trim(),
+            grade: document.getElementById('grade').value.trim(),
+            carrier: document.getElementById('carrier').value.trim(),
+            rego: document.getElementById('rego').value.trim(),
+            doorDirection: document.getElementById('doorDirection').value,
+            notes: ''
+        };
+
+        onsite.push(newEntry);
+        localStorage.setItem('onsite', JSON.stringify(onsite));
+
+        renderOnsite();
+        document.getElementById('addModal').style.display = 'none';
+        e.target.reset();
+    });
+
+    // Initial render
+    renderOnsite();
+</script>
+    <script>
+    function renderHistory() {
+        const tbody = document.getElementById('historyBody');
+        tbody.innerHTML = '';
+        history.forEach(entry => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${entry.release}</td>
+                <td>${entry.shippingline}</td>
+                <td>${entry.iso}</td>
+                <td>${entry.grade}</td>
+                <td>${entry.carrier}</td>
+                <td>${entry.rego}</td>
+                <td>${entry.doorDirection}</td>
+                <td>${entry.notes}</td>
+                <td>${entry.completedAt}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Render if tab active
+    document.querySelector('.tab[data-tab="history"]').addEventListener('click', renderHistory);
+    if (document.getElementById('history').classList.contains('active')) renderHistory();
+</script>
 <script>
     // Bookings logic
     const bookings = JSON.parse(localStorage.getItem('bookings') || '[]');
