@@ -51,6 +51,16 @@
         .truck-group + .truck-group {
             border-top: 3px solid #91d5ff;
         }
+                .truck-group1 {
+            background: #e6f7ff !important; /* Light blue */
+        }
+        .truck-group2 {
+            background: #e6ffe6 !important; /* Light green */
+        }
+        .truck-group1 + .truck-group1,
+        .truck-group2 + .truck-group2 {
+            border-top: 3px solid #ccc; /* Subtle separator within group if needed */
+        }
     </style>
 </head>
 <body>
@@ -225,7 +235,7 @@ function renderBookings() {
     bookings.sort((a, b) => a.carrier.localeCompare(b.carrier));
 
     bookings.forEach(booking => {
-        if (hideCompleted && booking.completed) return; // skip if hidden
+        if (hideCompleted && booking.completed) return;
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -272,7 +282,7 @@ function renderOnsite() {
     const tbody = document.getElementById('onsiteBody');
     tbody.innerHTML = '';
     
-    // Sort by Rego to group trucks together
+    // Sort by Rego
     onsite.sort((a, b) => a.rego.localeCompare(b.rego));
 
     const regoCount = {};
@@ -280,10 +290,20 @@ function renderOnsite() {
         regoCount[entry.rego] = (regoCount[entry.rego] || 0) + 1;
     });
 
+    let currentRego = '';
+    let groupColor = 1; // Start with 1 (blue)
+
     onsite.forEach((entry, index) => {
+        if (entry.rego !== currentRego) {
+            currentRego = entry.rego;
+            groupColor = 3 - groupColor; // Toggle 1<->2
+        }
+
         const tr = document.createElement('tr');
         const isGroup = regoCount[entry.rego] > 1;
-        if (isGroup) tr.classList.add('truck-group');
+        if (isGroup) {
+            tr.classList.add(`truck-group${groupColor}`);
+        }
 
         tr.innerHTML = `
             <td>${entry.release}</td>
@@ -299,7 +319,6 @@ function renderOnsite() {
         tbody.appendChild(tr);
     });
 
-    // Notes input
     document.querySelectorAll('.notesInput').forEach(input => {
         input.addEventListener('input', (e) => {
             const idx = e.target.dataset.index;
@@ -311,7 +330,6 @@ function renderOnsite() {
         });
     });
 
-    // Complete button
     document.querySelectorAll('.completeBtn').forEach(btn => {
         btn.addEventListener('click', () => {
             const idx = parseInt(btn.dataset.index);
@@ -326,20 +344,23 @@ function renderOnsite() {
     });
 }
 
-// Auto-fill + mark booking as completed
+// Auto-fill ONLY if uncompleted match exists, mark THAT one
 document.getElementById('modal-release').addEventListener('blur', () => {
     const rel = document.getElementById('modal-release').value.trim();
-    const match = bookings.find(b => b.release === rel);
+    const match = bookings.find(b => b.release === rel && !b.completed);
     if (match) {
         document.getElementById('modal-shippingline').value = match.shippingline;
         document.getElementById('modal-iso').value = match.iso;
         document.getElementById('modal-grade').value = match.grade;
         document.getElementById('modal-carrier').value = match.carrier;
 
-        // Mark booking as completed
+        // Mark THIS match as completed
         match.completed = true;
         localStorage.setItem('bookings', JSON.stringify(bookings));
         if (document.getElementById('bookings').classList.contains('active')) renderBookings();
+    } else {
+        // If no uncompleted match, do nothing (no auto-fill)
+        console.log('No uncompleted booking found for this release.');
     }
 });
 
@@ -368,7 +389,6 @@ document.getElementById('onsiteForm').addEventListener('submit', (e) => {
     document.getElementById('addModal').style.display = 'none';
     e.target.reset();
 
-    // Refresh bookings if visible
     if (document.getElementById('bookings').classList.contains('active')) renderBookings();
 });
 
