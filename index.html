@@ -22,7 +22,7 @@
             margin-right: 20px;
             display: flex;
             align-items: center;
-            color: inherit; /* Ensures gear inherits tab text color */
+            color: inherit;
         }
         .settings-btn svg {
             width: 28px;
@@ -59,25 +59,23 @@
             transition: background 0.3s, color 0.3s;
         }
         .content.active { display: block; }
-        h1 { 
-            text-align: center; 
-            margin-top: 0; 
+        h1 {
+            text-align: center;
+            margin-top: 0;
             position: relative;
             margin-bottom: 30px;
         }
-        table { 
-            width: 100%; 
-            border-collapse: collapse; 
+        table {
+            width: 100%;
+            border-collapse: collapse;
             background: white;
             transition: background 0.3s;
         }
         th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; transition: all 0.3s; }
         th { background: #333; color: white; }
         tr:hover { background: #f0f0f0; }
-
         .truck-group1 { background: #e6f7ff !important; }
         .truck-group2 { background: #e6ffe6 !important; }
-
         .date-label {
             margin-left: auto;
             background: #333;
@@ -86,7 +84,6 @@
             border-radius: 4px;
             font-weight: bold;
         }
-
         .settings-dropdown {
             display: none;
             position: absolute;
@@ -108,7 +105,6 @@
         }
         .settings-item:hover { background: #f0f0f0; }
         .settings-item:last-child { border-bottom: none; }
-
         .tab-date {
             position: absolute;
             right: 20px;
@@ -120,7 +116,6 @@
             border-radius: 4px;
             background: white;
         }
-
         /* Horizontal form for On Site */
         .add-container-form {
             display: grid;
@@ -162,7 +157,6 @@
             .add-container-form { grid-template-columns: 1fr; }
             .add-container-form button { grid-column: span 1; }
         }
-
         /* THEMES */
         body.dark {
             background: #121212;
@@ -177,7 +171,6 @@
         body.dark .settings-dropdown { background: #1e1e1e; border-color: #444; color: #e0e0e0; }
         body.dark .settings-item:hover { background: #333; }
         body.dark .add-container-form { background: #2a2a2a; border-color: #444; }
-
         body.ocean {
             background: #e3f2fd;
         }
@@ -185,7 +178,6 @@
         body.ocean .tabs { background: #01579b; }
         body.ocean .tab.active { background: white; color: #01579b; }
         body.ocean th { background: #0288d1; }
-
         body.high-contrast {
             background: black;
             color: white;
@@ -197,7 +189,6 @@
         body.high-contrast .tab { color: yellow; }
         body.high-contrast .tab.active { background: yellow; color: black; }
         body.high-contrast .settings-btn { color: yellow; }
-
         body.blood {
             background: #1a0000;
             color: #ffcccc;
@@ -321,7 +312,7 @@
             <label>Door Direction</label>
             <input type="text" id="modal-doorDirection" required>
         </div>
-        <div></div> <!-- spacer -->
+        <div></div>
         <button type="submit">Add to On Site</button>
     </form>
 
@@ -387,40 +378,27 @@ document.querySelectorAll('.settings-item').forEach(item => {
     });
 });
 
-// App data and logic
-let bookings = JSON.parse(localStorage.getItem('bookings') || '[]');
-let onsite = JSON.parse(localStorage.getItem('onsite') || '[]');
-let history = JSON.parse(localStorage.getItem('history') || '[]');
-let hideCompleted = false;
-
-// Dynamic today - always real current date
-const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+// REAL DYNAMIC DATE - FIXED
+const today = new Date().toISOString().split('T')[0];
 const todayFull = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-// Update banner
 document.getElementById('dateLabel').textContent = `Today: ${todayFull}`;
 
-// Set current view dates
 let bookingsDate = today;
 let historyDate = today;
 
-// Set date pickers to today ON LOAD
+// Set pickers to today on load
 document.getElementById('bookingsDate').value = today;
 document.getElementById('historyDate').value = today;
 
-// Tab switching - reset to REAL today when switching
+// Tab switching
 document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', () => {
-        // Remove active from all
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
-
-        // Activate clicked tab
         tab.classList.add('active');
-        const targetContent = document.getElementById(tab.dataset.tab);
-        targetContent.classList.add('active');
+        document.getElementById(tab.dataset.tab).classList.add('active');
 
-        // Reset dates and render only for Bookings/History
         if (tab.dataset.tab === 'bookings') {
             bookingsDate = today;
             document.getElementById('bookingsDate').value = today;
@@ -435,10 +413,7 @@ document.querySelectorAll('.tab').forEach(tab => {
     });
 });
 
-// Trigger initial render for default tab (Bookings) without overriding date
-renderBookings();
-renderOnsite();
-
+// Date picker changes
 document.getElementById('bookingsDate').addEventListener('change', (e) => {
     bookingsDate = e.target.value;
     renderBookings();
@@ -448,6 +423,12 @@ document.getElementById('historyDate').addEventListener('change', (e) => {
     historyDate = e.target.value;
     renderHistory();
 });
+
+// Data and renders
+let bookings = JSON.parse(localStorage.getItem('bookings') || '[]');
+let onsite = JSON.parse(localStorage.getItem('onsite') || '[]');
+let history = JSON.parse(localStorage.getItem('history') || '[]');
+let hideCompleted = false;
 
 // BOOKINGS
 function renderBookings() {
@@ -496,8 +477,6 @@ document.getElementById('bookingForm').addEventListener('submit', (e) => {
     e.target.reset();
     renderBookings();
 });
-
-renderBookings();
 
 // ON SITE
 function renderOnsite() {
@@ -562,7 +541,7 @@ function renderOnsite() {
     });
 }
 
-// Auto-fill from today's bookings (case-insensitive)
+// Auto-fill
 document.getElementById('modal-release').addEventListener('blur', () => {
     const rel = document.getElementById('modal-release').value.trim().toUpperCase();
     const match = bookings.find(b => b.release.toUpperCase() === rel && b.date === today && !b.completed);
@@ -577,7 +556,7 @@ document.getElementById('modal-release').addEventListener('blur', () => {
     }
 });
 
-// On Site form submit
+// On Site submit
 document.getElementById('onsiteForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const newEntry = {
@@ -596,8 +575,6 @@ document.getElementById('onsiteForm').addEventListener('submit', (e) => {
     renderOnsite();
     if (document.getElementById('bookings').classList.contains('active')) renderBookings();
 });
-
-renderOnsite();
 
 // HISTORY
 function renderHistory() {
@@ -622,7 +599,9 @@ function renderHistory() {
         });
 }
 
-renderHistory(); // initial if needed
+// Initial renders
+renderBookings();
+renderOnsite();
 </script>
 </body>
 </html>
