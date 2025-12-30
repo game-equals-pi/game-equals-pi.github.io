@@ -61,6 +61,18 @@
         .truck-group2 + .truck-group2 {
             border-top: 3px solid #ccc; /* Subtle separator within group if needed */
         }
+        .date-selector {
+    position: absolute;
+    right: 20px;
+    top: 12px;
+    background: white;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+}
+.tabs { position: relative; } /* needed for absolute positioning */
+        
     </style>
 </head>
 <body>
@@ -69,6 +81,7 @@
         <div class="tab active" data-tab="bookings">Bookings</div>
         <div class="tab" data-tab="onsite">On Site</div>
         <div class="tab" data-tab="history">History</div>
+        <input type="date" id="dateSelector" class="date-selector">
     </div>
 
 <div id="bookings" class="content active">
@@ -210,11 +223,18 @@
 </div>
 
 <script>
-// Global data
+// Global data - now with dates
 let bookings = JSON.parse(localStorage.getItem('bookings') || '[]');
 let onsite = JSON.parse(localStorage.getItem('onsite') || '[]');
 let history = JSON.parse(localStorage.getItem('history') || '[]');
 let hideCompleted = false;
+
+// Get today's date in YYYY-MM-DD
+const today = new Date().toISOString().split('T')[0];
+let selectedDate = today;
+
+// Set default to today
+document.getElementById('dateSelector').value = today;
 
 // TAB SWITCHING
 document.querySelectorAll('.tab').forEach(tab => {
@@ -228,28 +248,36 @@ document.querySelectorAll('.tab').forEach(tab => {
     });
 });
 
+// DATE SELECTOR
+document.getElementById('dateSelector').addEventListener('change', (e) => {
+    selectedDate = e.target.value;
+    renderBookings();
+    if (document.getElementById('history').classList.contains('active')) renderHistory();
+});
+
 // BOOKINGS
 function renderBookings() {
     const tbody = document.getElementById('bookingsBody');
     tbody.innerHTML = '';
-    bookings.sort((a, b) => a.carrier.localeCompare(b.carrier));
+    bookings
+        .filter(b => b.date === selectedDate)
+        .sort((a, b) => a.carrier.localeCompare(b.carrier))
+        .forEach(booking => {
+            if (hideCompleted && booking.completed) return;
 
-    bookings.forEach(booking => {
-        if (hideCompleted && booking.completed) return;
-
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${booking.release}</td>
-            <td>${booking.shippingline}</td>
-            <td>${booking.iso}</td>
-            <td>${booking.grade}</td>
-            <td>${booking.carrier}</td>
-            <td style="text-align:center;">
-                <input type="checkbox" ${booking.completed ? 'checked' : ''} disabled>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${booking.release}</td>
+                <td>${booking.shippingline}</td>
+                <td>${booking.iso}</td>
+                <td>${booking.grade}</td>
+                <td>${booking.carrier}</td>
+                <td style="text-align:center;">
+                    <input type="checkbox" ${booking.completed ? 'checked' : ''} disabled>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
 }
 
 document.getElementById('toggleCompleted').addEventListener('click', (e) => {
@@ -262,6 +290,7 @@ document.getElementById('toggleCompleted').addEventListener('click', (e) => {
 document.getElementById('bookingForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const newBooking = {
+        date: selectedDate, // uses selected date
         release: document.getElementById('booking-release').value.trim(),
         shippingline: document.getElementById('booking-shippingline').value.trim(),
         iso: document.getElementById('booking-iso').value.trim(),
@@ -277,28 +306,24 @@ document.getElementById('bookingForm').addEventListener('submit', (e) => {
 
 renderBookings();
 
-// ON SITE
+// ON SITE (unchanged except render call)
 function renderOnsite() {
     const tbody = document.getElementById('onsiteBody');
     tbody.innerHTML = '';
     
-    // NO SORTING ANYMORE — keeps add order (newest at bottom)
-    // We'll still detect groups for coloring based on current order
-
     const regoCount = {};
     onsite.forEach(entry => {
         regoCount[entry.rego] = (regoCount[entry.rego] || 0) + 1;
     });
 
     let currentRego = null;
-    let groupColor = 1; // 1 or 2
+    let groupColor = 1;
 
     onsite.forEach((entry, index) => {
         if (entry.rego !== currentRego) {
             currentRego = entry.rego;
-            // Only alternate if this rego is actually a group (>1)
             if (regoCount[entry.rego] > 1) {
-                groupColor = 3 - groupColor; // toggle 1 ↔ 2
+                groupColor = 3 - groupColor;
             }
         }
 
@@ -322,7 +347,6 @@ function renderOnsite() {
         tbody.appendChild(tr);
     });
 
-    // Rest of the event listeners (notes + complete) stay exactly the same
     document.querySelectorAll('.notesInput').forEach(input => {
         input.addEventListener('input', (e) => {
             const idx = e.target.dataset.index;
@@ -337,7 +361,11 @@ function renderOnsite() {
     document.querySelectorAll('.completeBtn').forEach(btn => {
         btn.addEventListener('click', () => {
             const idx = parseInt(btn.dataset.index);
-            const completed = { ...onsite[idx], completedAt: new Date().toLocaleString() };
+            const completed = { 
+                ...onsite[idx], 
+                completedAt: new Date().toLocaleString(),
+                completedDate: today  // date it was actually completed
+            };
             history.push(completed);
             localStorage.setItem('history', JSON.stringify(history));
             onsite.splice(idx, 1);
@@ -347,23 +375,20 @@ function renderOnsite() {
         });
     });
 }
-// Auto-fill ONLY if uncompleted match exists, mark THAT one
+
+// Auto-fill + mark completed
 document.getElementById('modal-release').addEventListener('blur', () => {
     const rel = document.getElementById('modal-release').value.trim();
-    const match = bookings.find(b => b.release === rel && !b.completed);
+    const match = bookings.find(b => b.release === rel && b.date === selectedDate && !b.completed);
     if (match) {
         document.getElementById('modal-shippingline').value = match.shippingline;
         document.getElementById('modal-iso').value = match.iso;
         document.getElementById('modal-grade').value = match.grade;
         document.getElementById('modal-carrier').value = match.carrier;
 
-        // Mark THIS match as completed
         match.completed = true;
         localStorage.setItem('bookings', JSON.stringify(bookings));
         if (document.getElementById('bookings').classList.contains('active')) renderBookings();
-    } else {
-        // If no uncompleted match, do nothing (no auto-fill)
-        console.log('No uncompleted booking found for this release.');
     }
 });
 
@@ -391,31 +416,32 @@ document.getElementById('onsiteForm').addEventListener('submit', (e) => {
     renderOnsite();
     document.getElementById('addModal').style.display = 'none';
     e.target.reset();
-
     if (document.getElementById('bookings').classList.contains('active')) renderBookings();
 });
 
 renderOnsite();
 
-// HISTORY
+// HISTORY - filtered by completedDate
 function renderHistory() {
     const tbody = document.getElementById('historyBody');
     tbody.innerHTML = '';
-    history.forEach(entry => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${entry.release}</td>
-            <td>${entry.shippingline}</td>
-            <td>${entry.iso}</td>
-            <td>${entry.grade}</td>
-            <td>${entry.carrier}</td>
-            <td>${entry.rego}</td>
-            <td>${entry.doorDirection}</td>
-            <td>${entry.notes || ''}</td>
-            <td>${entry.completedAt || ''}</td>
-        `;
-        tbody.appendChild(tr);
-    });
+    history
+        .filter(h => h.completedDate === selectedDate)
+        .forEach(entry => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${entry.release}</td>
+                <td>${entry.shippingline}</td>
+                <td>${entry.iso}</td>
+                <td>${entry.grade}</td>
+                <td>${entry.carrier}</td>
+                <td>${entry.rego}</td>
+                <td>${entry.doorDirection}</td>
+                <td>${entry.notes || ''}</td>
+                <td>${entry.completedAt || ''}</td>
+            `;
+            tbody.appendChild(tr);
+        });
 }
 </script>
     
