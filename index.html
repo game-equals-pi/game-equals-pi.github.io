@@ -379,7 +379,11 @@ document.querySelectorAll('.settings-item').forEach(item => {
 });
 
 // REAL DYNAMIC DATE - FIXED
-const today = new Date().toISOString().split('T')[0];
+const now = new Date();
+const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    .toISOString()
+    .split('T')[0];
+
 const todayFull = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
 document.getElementById('dateLabel').textContent = `Today: ${todayFull}`;
