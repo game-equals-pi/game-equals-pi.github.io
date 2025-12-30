@@ -228,7 +228,7 @@
 </div>
 
 <div id="bookings" class="content active">
-    <h1>Bookings <input type="date" id="bookingsDate" class="tab-date"></h1>
+    <h1>Bookings <input type="date" id="bookingsDate" class="tab-date" autocomplete="off"></h1>
    
     <form id="bookingForm">
         <table style="width:100%; max-width:800px; margin:20px auto;">
@@ -335,7 +335,7 @@
 </div>
 
 <div id="history" class="content">
-    <h1>History <input type="date" id="historyDate" class="tab-date"></h1>
+    <h1>History <input type="date" id="historyDate" class="tab-date" autocomplete="off"></h1>
     <table id="historyTable">
         <thead>
             <tr>
@@ -399,12 +399,23 @@ const todayFull = now.toLocaleDateString('en-US', {
 
 document.getElementById('dateLabel').textContent = `Today: ${todayFull}`;
 
-let bookingsDate = today;
-let historyDate = today;
+let bookingsDate;
+let historyDate;
 
-// Set pickers to today on load
-document.getElementById('bookingsDate').value = today;
-document.getElementById('historyDate').value = today;
+document.addEventListener('DOMContentLoaded', () => {
+    bookingsDate = today;
+    historyDate = today;
+
+    const b = document.getElementById('bookingsDate');
+    const h = document.getElementById('historyDate');
+
+    b.value = today;
+    h.value = today;
+
+    b.dispatchEvent(new Event('change'));
+    h.dispatchEvent(new Event('change'));
+});
+
 
 // Tab switching
 document.querySelectorAll('.tab').forEach(tab => {
