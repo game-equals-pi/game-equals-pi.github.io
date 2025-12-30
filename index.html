@@ -11,6 +11,7 @@
             display: flex;
             padding: 0 20px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            position: relative;
         }
         .tab {
             padding: 15px 30px;
@@ -37,73 +38,62 @@
             display: none;
         }
         .content.active { display: block; }
-        h1 { text-align: center; margin-top: 0; }
-        table { /* same as before */ 
-            width: 100%; border-collapse: collapse; background: white;
+        h1 { 
+            text-align: center; 
+            margin-top: 0; 
+            position: relative;
+            margin-bottom: 30px;
+        }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            background: white;
         }
         th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }
         th { background: #333; color: white; }
         tr:hover { background: #f0f0f0; }
-
-                .truck-group {
-            background: #e6f7ff !important;
-        }
-        .truck-group + .truck-group {
-            border-top: 3px solid #91d5ff;
-        }
-                .truck-group1 {
+        
+        .truck-group1 {
             background: #e6f7ff !important; /* Light blue */
         }
         .truck-group2 {
             background: #e6ffe6 !important; /* Light green */
         }
-        .truck-group1 + .truck-group1,
-        .truck-group2 + .truck-group2 {
-            border-top: 3px solid #ccc; /* Subtle separator within group if needed */
-        }
-        .date-selector {
-    position: absolute;
-    right: 20px;
-    top: 12px;
-    background: white;
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 16px;
-}
-.tabs { position: relative; } /* needed for absolute positioning */
-        .date-label {
-    position: absolute;
-    right: 20px;
-    top: 12px;
-    background: #333;
-    color: white;
-    padding: 8px 16px;
-    border-radius: 4px;
-    font-weight: bold;
-}
-.tab-date {
-    float: right;
-    margin-top: -35px;
-    margin-right: 20px;
-    font-size: 14px;
-}
-.content h1 { position: relative; }
         
+        .date-label {
+            position: absolute;
+            right: 20px;
+            top: 12px;
+            background: #333;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .tab-date {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 16px;
+            padding: 6px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: white;
+        }
     </style>
 </head>
 <body>
-
 <div class="tabs">
     <div class="tab active" data-tab="bookings">Bookings</div>
     <div class="tab" data-tab="onsite">On Site</div>
     <div class="tab" data-tab="history">History</div>
-    <div class="date-label">Today: Dec 30, 2025</div>
+    <div class="date-label">Today: Tuesday, December 30, 2025</div>
 </div>
 
 <div id="bookings" class="content active">
-<h1>Bookings <input type="date" id="bookingsDate" class="tab-date"></h1>
-    
+    <h1>Bookings <input type="date" id="bookingsDate" class="tab-date"></h1>
+   
     <form id="bookingForm">
         <table style="width:100%; max-width:800px; margin:20px auto;">
             <tr>
@@ -133,13 +123,12 @@
             </tr>
         </table>
     </form>
-
     <h2 style="text-align:center; margin-top:40px;">Current Bookings</h2>
     <div style="text-align:right; margin-bottom:10px;">
-    <button id="toggleCompleted" style="padding:8px 16px; background:#555; color:white; border:none; border-radius:4px; cursor:pointer;">
-        Hide Completed
-    </button>
-</div>
+        <button id="toggleCompleted" style="padding:8px 16px; background:#555; color:white; border:none; border-radius:4px; cursor:pointer;">
+            Hide Completed
+        </button>
+    </div>
     <table id="bookingsTable">
         <thead>
             <tr>
@@ -151,19 +140,16 @@
                 <th>Completed</th>
             </tr>
         </thead>
-        <tbody id="bookingsBody">
-            <!-- Rows injected by JS -->
-        </tbody>
+        <tbody id="bookingsBody"></tbody>
     </table>
 </div>
 
 <div id="onsite" class="content">
     <h1>On Site Containers</h1>
-    
+   
     <button id="addNewBtn" style="padding:10px 20px; font-size:16px; margin-bottom:20px; background:#007bff; color:white; border:none; border-radius:4px; cursor:pointer;">
         + Add New Container
     </button>
-
     <table id="onsiteTable">
         <thead>
             <tr>
@@ -174,39 +160,27 @@
                 <th>Carrier</th>
                 <th>Rego</th>
                 <th>Door Direction</th>
-                <th>Notes</th>
+                <th>Container Number</th>
                 <th>Actions</th>
             </tr>
         </thead>
-        <tbody id="onsiteBody">
-            <!-- Rows injected by JS -->
-        </tbody>
+        <tbody id="onsiteBody"></tbody>
     </table>
 </div>
 
 <!-- Modal -->
-<div id="addModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); justify-content:center; align-items:center;">
+<div id="addModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); justify-content:center; align-items:center; z-index:1000;">
     <div style="background:white; padding:30px; border-radius:8px; width:90%; max-width:600px;">
         <h2 style="margin-top:0;">Add New On-Site Container</h2>
         <form id="onsiteForm">
             <table style="width:100%;">
-                    <tr><td><label>Release Number</label></td><td><input type="text" id="modal-release" required></td></tr>
-                    <tr><td><label>Shipping Line</label></td><td><input type="text" id="modal-shippingline" required></td></tr>
-                    <tr><td><label>ISO</label></td><td><input type="text" id="modal-iso" required></td></tr>
-                    <tr><td><label>Grade</label></td><td><input type="text" id="modal-grade" required></td></tr>
-                    <tr><td><label>Carrier</label></td><td><input type="text" id="modal-carrier" required></td></tr>
-                    <tr><td><label>Rego</label></td><td><input type="text" id="modal-rego" required></td></tr>
-                    <tr><td><label>Door Direction</label></td>
-                        <td>
-                            <select id="modal-doorDirection" required>
-                                <option value="">Select...</option>
-                                <option>Left Swing</option>
-                                <option>Right Swing</option>
-                                <option>Both Ends</option>
-                                <option>Open Side</option>
-                            </select>
-                        </td>
-                    </tr>
+                <tr><td><label>Release Number</label></td><td><input type="text" id="modal-release" required></td></tr>
+                <tr><td><label>Shipping Line</label></td><td><input type="text" id="modal-shippingline" required></td></tr>
+                <tr><td><label>ISO</label></td><td><input type="text" id="modal-iso" required></td></tr>
+                <tr><td><label>Grade</label></td><td><input type="text" id="modal-grade" required></td></tr>
+                <tr><td><label>Carrier</label></td><td><input type="text" id="modal-carrier" required></td></tr>
+                <tr><td><label>Rego</label></td><td><input type="text" id="modal-rego" required></td></tr>
+                <tr><td><label>Door Direction</label></td><td><input type="text" id="modal-doorDirection" required></td></tr>
                 <tr>
                     <td colspan="2" style="text-align:right; padding-top:20px;">
                         <button type="button" id="cancelBtn">Cancel</button>
@@ -217,6 +191,7 @@
         </form>
     </div>
 </div>
+
 <div id="history" class="content">
     <h1>History <input type="date" id="historyDate" class="tab-date"></h1>
     <table id="historyTable">
@@ -229,13 +204,11 @@
                 <th>Carrier</th>
                 <th>Rego</th>
                 <th>Door Direction</th>
-                <th>Notes</th>
+                <th>Container Number</th>
                 <th>Completed At</th>
             </tr>
         </thead>
-        <tbody id="historyBody">
-            <!-- Rows injected by JS -->
-        </tbody>
+        <tbody id="historyBody"></tbody>
     </table>
 </div>
 
@@ -246,15 +219,15 @@ let onsite = JSON.parse(localStorage.getItem('onsite') || '[]');
 let history = JSON.parse(localStorage.getItem('history') || '[]');
 let hideCompleted = false;
 
-const today = '2025-12-30'; // Hardcoded per your date
+const today = '2025-12-30';
 let bookingsDate = today;
 let historyDate = today;
 
-// Set initials
+// Set default dates
 document.getElementById('bookingsDate').value = today;
 document.getElementById('historyDate').value = today;
 
-// TAB SWITCHING + RESET TO TODAY
+// TAB SWITCHING + reset to today
 document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', () => {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -262,7 +235,6 @@ document.querySelectorAll('.tab').forEach(tab => {
         tab.classList.add('active');
         document.getElementById(tab.dataset.tab).classList.add('active');
 
-        // RESET TO TODAY ON SWITCH
         if (tab.dataset.tab === 'bookings') {
             bookingsDate = today;
             document.getElementById('bookingsDate').value = today;
@@ -279,12 +251,11 @@ document.querySelectorAll('.tab').forEach(tab => {
     });
 });
 
-// DATE CHANGE LISTENERS
+// Date pickers
 document.getElementById('bookingsDate').addEventListener('change', (e) => {
     bookingsDate = e.target.value;
     renderBookings();
 });
-
 document.getElementById('historyDate').addEventListener('change', (e) => {
     historyDate = e.target.value;
     renderHistory();
@@ -296,10 +267,9 @@ function renderBookings() {
     tbody.innerHTML = '';
     bookings
         .filter(b => b.date === bookingsDate)
-        .sort((a, b) => a.carrier.localeCompare(b.carrier))
+        .sort((a, b) => a.carrier.toUpperCase().localeCompare(b.carrier.toUpperCase()))
         .forEach(booking => {
             if (hideCompleted && booking.completed) return;
-
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${booking.release}</td>
@@ -326,11 +296,11 @@ document.getElementById('bookingForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const newBooking = {
         date: bookingsDate,
-        release: document.getElementById('booking-release').value.trim(),
-        shippingline: document.getElementById('booking-shippingline').value.trim(),
-        iso: document.getElementById('booking-iso').value.trim(),
-        grade: document.getElementById('booking-grade').value.trim(),
-        carrier: document.getElementById('booking-carrier').value.trim(),
+        release: document.getElementById('booking-release').value.trim().toUpperCase(),
+        shippingline: document.getElementById('booking-shippingline').value.trim().toUpperCase(),
+        iso: document.getElementById('booking-iso').value.trim().toUpperCase(),
+        grade: document.getElementById('booking-grade').value.trim().toUpperCase(),
+        carrier: document.getElementById('booking-carrier').value.trim().toUpperCase(),
         completed: false
     };
     bookings.push(newBooking);
@@ -369,20 +339,20 @@ function renderOnsite() {
             <td>${entry.carrier}</td>
             <td>${entry.rego}</td>
             <td>${entry.doorDirection}</td>
-            <td><input type="text" value="${entry.notes || ''}" data-index="${index}" class="notesInput" style="width:100%;padding:5px;"></td>
-            <td><button class="completeBtn" data-index="${index}" style="background:${entry.notes ? '#dc3545' : '#ccc'};color:white;border:none;padding:5px 10px;border-radius:4px;" ${entry.notes ? '' : 'disabled'}>Complete</button></td>
+            <td><input type="text" value="${entry.containerNumber || ''}" data-index="${index}" class="containerInput" style="width:100%;padding:5px;"></td>
+            <td><button class="completeBtn" data-index="${index}" style="background:${entry.containerNumber ? '#dc3545' : '#ccc'};color:white;border:none;padding:5px 10px;border-radius:4px;" ${entry.containerNumber ? '' : 'disabled'}>Complete</button></td>
         `;
         tbody.appendChild(tr);
     });
 
-    document.querySelectorAll('.notesInput').forEach(input => {
+    document.querySelectorAll('.containerInput').forEach(input => {
         input.addEventListener('input', (e) => {
             const idx = e.target.dataset.index;
-            onsite[idx].notes = e.target.value.trim();
+            onsite[idx].containerNumber = e.target.value.trim();
             localStorage.setItem('onsite', JSON.stringify(onsite));
             const btn = e.target.closest('tr').querySelector('.completeBtn');
-            btn.disabled = !onsite[idx].notes;
-            btn.style.background = onsite[idx].notes ? '#dc3545' : '#ccc';
+            btn.disabled = !onsite[idx].containerNumber;
+            btn.style.background = onsite[idx].containerNumber ? '#dc3545' : '#ccc';
         });
     });
 
@@ -404,10 +374,10 @@ function renderOnsite() {
     });
 }
 
-// AUTO-FILL: ONLY TODAY'S BOOKINGS
+// Auto-fill: case-insensitive, only today's bookings
 document.getElementById('modal-release').addEventListener('blur', () => {
-    const rel = document.getElementById('modal-release').value.trim();
-    const match = bookings.find(b => b.release === rel && b.date === today && !b.completed);
+    const rel = document.getElementById('modal-release').value.trim().toUpperCase();
+    const match = bookings.find(b => b.release.toUpperCase() === rel && b.date === today && !b.completed);
     if (match) {
         document.getElementById('modal-shippingline').value = match.shippingline;
         document.getElementById('modal-iso').value = match.iso;
@@ -419,7 +389,7 @@ document.getElementById('modal-release').addEventListener('blur', () => {
     }
 });
 
-// Modal
+// Modal controls
 document.getElementById('addNewBtn').onclick = () => document.getElementById('addModal').style.display = 'flex';
 document.getElementById('cancelBtn').onclick = () => {
     document.getElementById('addModal').style.display = 'none';
@@ -429,14 +399,14 @@ document.getElementById('cancelBtn').onclick = () => {
 document.getElementById('onsiteForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const newEntry = {
-        release: document.getElementById('modal-release').value.trim(),
-        shippingline: document.getElementById('modal-shippingline').value.trim(),
-        iso: document.getElementById('modal-iso').value.trim(),
-        grade: document.getElementById('modal-grade').value.trim(),
-        carrier: document.getElementById('modal-carrier').value.trim(),
-        rego: document.getElementById('modal-rego').value.trim(),
-        doorDirection: document.getElementById('modal-doorDirection').value,
-        notes: ''
+        release: document.getElementById('modal-release').value.trim().toUpperCase(),
+        shippingline: document.getElementById('modal-shippingline').value.trim().toUpperCase(),
+        iso: document.getElementById('modal-iso').value.trim().toUpperCase(),
+        grade: document.getElementById('modal-grade').value.trim().toUpperCase(),
+        carrier: document.getElementById('modal-carrier').value.trim().toUpperCase(),
+        rego: document.getElementById('modal-rego').value.trim().toUpperCase(),
+        doorDirection: document.getElementById('modal-doorDirection').value.trim().toUpperCase(),
+        containerNumber: ''
     };
     onsite.push(newEntry);
     localStorage.setItem('onsite', JSON.stringify(onsite));
@@ -464,13 +434,12 @@ function renderHistory() {
                 <td>${entry.carrier}</td>
                 <td>${entry.rego}</td>
                 <td>${entry.doorDirection}</td>
-                <td>${entry.notes || ''}</td>
+                <td>${entry.containerNumber || ''}</td>
                 <td>${entry.completedAt || ''}</td>
             `;
             tbody.appendChild(tr);
         });
 }
 </script>
-    
 </body>
 </html>
