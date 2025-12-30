@@ -411,26 +411,33 @@ document.getElementById('historyDate').value = today;
 // Tab switching - reset to REAL today when switching
 document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', () => {
+        // Remove active from all
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
-        tab.classList.add('active');
-        document.getElementById(tab.dataset.tab).classList.add('active');
 
+        // Activate clicked tab
+        tab.classList.add('active');
+        const targetContent = document.getElementById(tab.dataset.tab);
+        targetContent.classList.add('active');
+
+        // Reset dates and render only for Bookings/History
         if (tab.dataset.tab === 'bookings') {
             bookingsDate = today;
             document.getElementById('bookingsDate').value = today;
             renderBookings();
-        }
-        if (tab.dataset.tab === 'history') {
+        } else if (tab.dataset.tab === 'history') {
             historyDate = today;
             document.getElementById('historyDate').value = today;
             renderHistory();
-        }
-        if (tab.dataset.tab === 'onsite') {
+        } else if (tab.dataset.tab === 'onsite') {
             renderOnsite();
         }
     });
 });
+
+// Trigger initial render for default tab (Bookings) without overriding date
+renderBookings();
+renderOnsite();
 
 document.getElementById('bookingsDate').addEventListener('change', (e) => {
     bookingsDate = e.target.value;
