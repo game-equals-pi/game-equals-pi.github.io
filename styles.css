@@ -1,1 +1,174 @@
+body { font-family: Arial, sans-serif; margin: 0; background: #f4f4f4; transition: background 0.3s, color 0.3s; }
+.tabs {
+    background: #333;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    position: relative;
+}
+.settings-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    color: inherit;
+}
+.settings-btn svg {
+    width: 28px;
+    height: 28px;
+    fill: currentColor;
+    transition: opacity 0.3s;
+}
+.settings-btn:hover svg { opacity: 0.8; }
+.tab {
+    padding: 15px 30px;
+    color: white;
+    cursor: pointer;
+    border-bottom: 4px solid transparent;
+    transition: all 0.3s;
+    user-select: none;
+}
+.tab:hover { background: rgba(255,255,255,0.1); }
+.tab.active {
+    background: white;
+    color: #333;
+    border-bottom: 4px solid #007bff;
+    font-weight: bold;
+}
+.content {
+    padding: 30px;
+    min-height: 80vh;
+    background: white;
+    margin: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    display: none;
+    transition: background 0.3s, color 0.3s;
+}
+.content.active { display: block; }
+h1 { text-align: center; margin-top: 0; position: relative; margin-bottom: 30px; }
+table { width: 100%; border-collapse: collapse; background: white; transition: background 0.3s; }
+th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; transition: all 0.3s; }
+th { background: #333; color: white; }
+tr:hover { background: #f0f0f0; cursor: pointer; }
+.completed-row { opacity: 0.6; pointer-events: none; }
+.truck-group1 { background: #e6f7ff !important; }
+.truck-group2 { background: #e6ffe6 !important; }
+.date-label {
+    margin-left: auto;
+    background: #333;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: bold;
+    margin-right: 180px;
+}
+.tab-date {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 16px;
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: white;
+}
+.add-container-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin-bottom: 30px;
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+.add-container-form label { font-weight: bold; font-size: 14px; margin-bottom: 4px; display: block; }
+.add-container-form input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+.form-buttons {
+    grid-column: span 2;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+.form-buttons button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+.form-buttons button[type="submit"] { background: #28a745; color: white; }
+.form-buttons button[type="button"] { background: #6c757d; color: white; }
+@media (max-width: 600px) { .form-buttons { grid-column: span 1; } }
+#login-page { padding: 50px; text-align: center; max-width: 400px; margin: 100px auto; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+#login-page input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; }
+#login-page button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+#logout-btn { position: absolute; right: 20px; top: 20px; background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; z-index: 1001; }
+.settings-dropdown {
+    display: none;
+    position: absolute;
+    left: 60px;
+    top: 70px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    z-index: 1000;
+    width: 220px;
+}
+.settings-dropdown.active { display: block; }
+.settings-item { padding: 14px 16px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 15px; }
+.settings-item:hover { background: #f0f0f0; }
+.settings-item:last-child { border-bottom: none; }
+.delete-btn, .completeBtn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 5px;
+}
+.delete-btn { background: #6c757d; }
 
+/* === THEMES === */
+body.dark { background: #121212; color: #e0e0e0; }
+body.dark .content, body.dark table { background: #1e1e1e; }
+body.dark th { background: #333; }
+body.dark td { border-color: #444; }
+body.dark tr:hover { background: #2a2a2a; }
+body.dark .tabs { background: #1e1e1e; }
+body.dark .tab { color: #e0e0e0; }
+body.dark .settings-dropdown { background: #1e1e1e; border-color: #444; color: #e0e0e0; }
+body.dark .settings-item:hover { background: #333; }
+body.dark .add-container-form { background: #2a2a2a; border-color: #444; }
+body.ocean { background: #e3f2fd; }
+body.ocean .content, body.ocean table { background: #ffffff; }
+body.ocean .tabs { background: #01579b; }
+body.ocean .tab.active { background: white; color: #01579b; }
+body.ocean th { background: #0288d1; }
+body.high-contrast { background: black; color: white; }
+body.high-contrast .content, body.high-contrast table { background: black; }
+body.high-contrast th { background: white; color: black; }
+body.high-contrast td { border-color: white; }
+body.high-contrast tr:hover { background: #333; }
+body.high-contrast .tab { color: yellow; }
+body.high-contrast .tab.active { background: yellow; color: black; }
+body.high-contrast .settings-btn { color: yellow; }
+body.blood { background: #1a0000; color: #ffcccc; }
+body.blood .tabs { background: #330000; }
+body.blood .tab { color: #ff9999; }
+body.blood .tab.active { background: #ff3333; color: white; border-bottom-color: #ff6666; }
+body.blood .content, body.blood table { background: #330000; }
+body.blood th { background: #990000; color: white; }
+body.blood td { border-color: #660000; }
+body.blood tr:hover { background: #660000; }
+body.blood .settings-dropdown { background: #330000; border-color: #990000; color: #ffcccc; }
+body.blood .settings-item:hover { background: #660000; }
+body.blood .date-label { background: #990000; }
+body.blood .add-container-form { background: #660000; border-color: #990000; }
