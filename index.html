@@ -61,7 +61,7 @@
         table { width: 100%; border-collapse: collapse; background: white; transition: background 0.3s; }
         th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; transition: all 0.3s; }
         th { background: #333; color: white; }
-        tr:hover { background: #f0f0f0; }
+        tr:hover { background: #f0f0f0; cursor: pointer; }
         .completed-row { opacity: 0.6; pointer-events: none; }
         .truck-group1 { background: #e6f7ff !important; }
         .truck-group2 { background: #e6ffe6 !important; }
@@ -189,7 +189,7 @@
 </head>
 <body>
 
-<!-- Login Page (mandatory) -->
+<!-- Login Page -->
 <div id="login-page">
     <h1>Container Dashboard</h1>
     <h2>Login required</h2>
@@ -203,7 +203,7 @@
 <div id="dashboard" style="display:none;">
     <div class="tabs">
         <button class="settings-btn" id="settingsBtn">
-            <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.92 0-.31-.02-.62-.06-.92l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.49.49 0 0 0-.5-.42h-3.84a.49.49 0 0 0-.5.42l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22l-1.92 3.32c-.12.22-.07.47.12.61l2.03 1.58c-.04.3-.06.61-.06.92 0 .31.02.62.06.92l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l-.36 2.54c.05.24.24.42.5.42h3.84c.26 0 .45-.18.5-.42l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.07.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.03-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+            <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.92 0-.31-.02-.62-.06-.92l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.49.49 0 0 0-.5-.42h-3.84a.49.49 0 0 0-.5.42l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22l-1.92 3.32c-.12.22-.07.47.12.61l2.03 1.58c-.04.3-.06.61-.06.92 0 .31.02.62.06.92l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.42.5.42h3.84c.26 0 .45-.18.5-.42l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.07.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.03-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
         </button>
         <div class="tab active" data-tab="bookings">Bookings</div>
         <div class="tab" data-tab="onsite">On Site</div>
@@ -417,6 +417,8 @@ async function initApp() {
 
     // Render functions
     function renderBookingsTable(data) {
+        // Sort by carrier alphabetically
+        data.sort((a, b) => a.carrier.toUpperCase().localeCompare(b.carrier.toUpperCase()));
         const tbody = document.getElementById('bookingsBody');
         tbody.innerHTML = '';
         data.forEach(booking => {
@@ -431,10 +433,14 @@ async function initApp() {
                 <td style="text-align:center;"><input type="checkbox" ${booking.completed ? 'checked' : ''} disabled></td>
                 <td><button class="delete-btn" data-id="${booking.id}">×</button></td>
             `;
+            tr.addEventListener('click', (e) => {
+                if (!e.target.classList.contains('delete-btn')) {
+                    moveBookingToOnsite(booking);
+                }
+            });
             tbody.appendChild(tr);
         });
 
-        // Delete booking
         document.querySelectorAll('#bookingsBody .delete-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -482,7 +488,6 @@ async function initApp() {
             tbody.appendChild(tr);
         });
 
-        // Container number input enables Complete button
         document.querySelectorAll('.containerInput').forEach(input => {
             input.addEventListener('input', (e) => {
                 const value = e.target.value.trim();
@@ -490,14 +495,14 @@ async function initApp() {
                 const btn = tr.querySelector('.completeBtn');
                 btn.disabled = value === '';
                 btn.style.background = value ? '#dc3545' : '#ccc';
-                // Save on blur or enter
-                if (e.type === 'blur' || e.key === 'Enter') {
-                    supabaseClient.from('onsite').update({ container_number: value }).eq('id', input.dataset.id);
-                }
+            });
+            input.addEventListener('blur', async (e) => {
+                const id = e.target.dataset.id;
+                const value = e.target.value.trim();
+                await supabaseClient.from('onsite').update({ container_number: value }).eq('id', id);
             });
         });
 
-        // Complete
         document.querySelectorAll('.completeBtn').forEach(btn => {
             btn.addEventListener('click', async () => {
                 const id = btn.dataset.id;
@@ -515,7 +520,6 @@ async function initApp() {
             });
         });
 
-        // Delete onsite
         document.querySelectorAll('#onsiteBody .delete-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -546,6 +550,31 @@ async function initApp() {
             tbody.appendChild(tr);
         });
     }
+
+    function moveBookingToOnsite(booking) {
+        document.querySelector('.tab[data-tab="onsite"]').click();
+        document.getElementById('modal-release').value = booking.release;
+        document.getElementById('modal-shippingline').value = booking.shippingline;
+        document.getElementById('modal-iso').value = booking.iso;
+        document.getElementById('modal-grade').value = booking.grade;
+        document.getElementById('modal-carrier').value = booking.carrier;
+        document.getElementById('modal-rego').focus();
+    }
+
+    // Auto-fill on release number blur in On Site
+    document.getElementById('modal-release').addEventListener('blur', async () => {
+        const rel = document.getElementById('modal-release').value.trim().toUpperCase();
+        if (!rel) return;
+
+        const { data } = await supabaseClient.from('bookings').select('*').eq('release', rel).eq('date', today).eq('completed', false).limit(1);
+        if (data && data.length > 0) {
+            const b = data[0];
+            document.getElementById('modal-shippingline').value = b.shippingline;
+            document.getElementById('modal-iso').value = b.iso;
+            document.getElementById('modal-grade').value = b.grade;
+            document.getElementById('modal-carrier').value = b.carrier;
+        }
+    });
 
     // Load functions (public data)
     async function loadBookings() {
