@@ -143,7 +143,17 @@ async function initApp() {
 
     // Render functions
     function renderBookingsTable(data) {
-        data.sort((a, b) => a.carrier.toUpperCase().localeCompare(b.carrier.toUpperCase()));
+      data.sort((a, b) => {
+    const carrierA = a.carrier.toUpperCase();
+    const carrierB = b.carrier.toUpperCase();
+    if (carrierA !== carrierB) {
+        return carrierA.localeCompare(carrierB);
+    }
+    // If carriers are the same, sort by release number
+    const releaseA = a.release.toUpperCase();
+    const releaseB = b.release.toUpperCase();
+    return releaseA.localeCompare(releaseB);
+});
         const tbody = document.getElementById('bookingsBody');
         tbody.innerHTML = '';
         data.forEach(booking => {
