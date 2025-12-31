@@ -149,8 +149,9 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// Correct Supabase client
-const supabase = window.supabase.createClient(
+const { createClient } = supabase;
+
+const supabaseClient = createClient(
   'https://xoxbmcfsawwibxdegznv.supabase.co',
   'sb_publishable_PWIgfu7AZifTuNM-3CNlHA_D7wqFB7s'
 );
@@ -158,27 +159,27 @@ const supabase = window.supabase.createClient(
 // Auth state
 let user = null;
 
-// Login / Sign up button
+// Login / Sign up
 document.getElementById('auth-btn').addEventListener('click', async () => {
     const email = document.getElementById('auth-email').value.trim();
     const password = document.getElementById('auth-password').value;
     const message = document.getElementById('auth-message');
 
     if (!email || !password) {
-        message.textContent = 'Enter email and password';
+        message.textContent = 'Fill in email and password';
         return;
     }
 
     message.textContent = 'Loading...';
 
-    // Try login first
-    let { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    // Try login
+    let { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
 
-    if (error && error.message.includes('Invalid login credentials')) {
-        // If login fails, try signup
-        ({ data, error } = await supabase.auth.signUp({ email, password }));
+    if (error && error.message === 'Invalid login credentials') {
+        // Try signup
+        ({ data, error } = await supabaseClient.auth.signUp({ email, password }));
         if (!error) {
-            message.textContent = 'Check your email to confirm signup!';
+            message.textContent = 'Check your email for confirmation link!';
             return;
         }
     }
@@ -189,14 +190,15 @@ document.getElementById('auth-btn').addEventListener('click', async () => {
         user = data.user;
         document.getElementById('login-page').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
+        message.textContent = 'Logged in!';
         initApp();
     }
 });
 
-// Check if already logged in
-supabase.auth.getSession().then(({ data: { session } }) => {
-    if (session) {
-        user = session.user;
+// Check existing session
+supabaseClient.auth.getSession().then(({ data }) => {
+    if (data.session) {
+        user = data.session.user;
         document.getElementById('login-page').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
         initApp();
@@ -205,14 +207,12 @@ supabase.auth.getSession().then(({ data: { session } }) => {
 
 // Logout
 document.getElementById('logout-btn').addEventListener('click', async () => {
-    await supabase.auth.signOut();
+    await supabaseClient.auth.signOut();
     location.reload();
 });
 
-// Placeholder for when logged in
 function initApp() {
-    alert('Logged in! Dashboard ready – full data sync coming in next update.');
-    // We'll add full Supabase sync in the next message
+    alert('Login successful! Full dashboard with real data coming next.');
 }
 </script>
 </body>
