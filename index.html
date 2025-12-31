@@ -72,6 +72,7 @@
             padding: 8px 16px;
             border-radius: 4px;
             font-weight: bold;
+            margin-right: 180px;
         }
         .tab-date {
             position: absolute;
@@ -103,9 +104,9 @@
         #login-page { padding: 50px; text-align: center; max-width: 400px; margin: 100px auto; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         #login-page input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; }
         #login-page button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        #logout-btn { position: absolute; right: 20px; top: 20px; background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; z-index: 999; }
+        #logout-btn { position: absolute; right: 20px; top: 20px; background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; z-index: 1001; }
 
-        /* Settings dropdown fixed – right aligned under gear */
+        /* Settings dropdown */
         .settings-dropdown {
             display: none;
             position: absolute;
@@ -245,8 +246,8 @@
 </div>
 
 <script>
+// Supabase
 const { createClient } = supabase;
-
 const supabaseClient = createClient(
   'https://xoxbmcfsawwibxdegznv.supabase.co',
   'sb_publishable_PWIgfu7AZifTuNM-3CNlHA_D7wqFB7s'
@@ -254,6 +255,31 @@ const supabaseClient = createClient(
 
 let user = null;
 
+// Theme
+const savedTheme = localStorage.getItem('theme') || 'light';
+document.body.classList.add(savedTheme);
+
+// Settings dropdown
+document.getElementById('settingsBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    document.getElementById('settingsDropdown').classList.toggle('active');
+});
+
+document.addEventListener('click', () => {
+    document.getElementById('settingsDropdown').classList.remove('active');
+});
+
+document.querySelectorAll('.settings-item').forEach(item => {
+    item.addEventListener('click', () => {
+        const theme = item.dataset.theme;
+        document.body.className = '';
+        document.body.classList.add(theme);
+        localStorage.setItem('theme', theme);
+        document.getElementById('settingsDropdown').classList.remove('active');
+    });
+});
+
+// Auth
 document.getElementById('auth-btn').addEventListener('click', async () => {
     const email = document.getElementById('auth-email').value.trim();
     const password = document.getElementById('auth-password').value;
@@ -300,6 +326,7 @@ document.getElementById('logout-btn').addEventListener('click', async () => {
     location.reload();
 });
 
+// App after login
 async function initApp() {
     const today = new Date().toISOString().split('T')[0];
     const todayFull = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
@@ -366,8 +393,63 @@ async function initApp() {
         const { data } = await supabaseClient.from('onsite').select('*').eq('user_id', user.id);
         const tbody = document.getElementById('onsiteBody');
         tbody.innerHTML = '';
-        // same as before (rego grouping, container number input, complete button)
-        // ... (full code from previous version)
+        const regoCount = {};
+        data.forEach(entry => regoCount[entry.rego] = (regoCount[entry.rego] || 0) + 1);
+
+        let currentRego = null;
+        let groupColor = 1;
+
+        data.forEach((entry, index) => {
+            if (entry.rego !== currentRego) {
+                currentRego = entry.rego;
+                if (regoCount[entry.rego] > 1) groupColor = 3 - groupColor;
+            }
+
+            const tr = document.createElement('tr');
+            if (regoCount[entry.rego] > 1) tr.classList.add(`truck-group${groupColor}`);
+
+            tr.innerHTML = `
+                <td>${entry.release}</td>
+                <td>${entry.shippingline}</td>
+                <td>${entry.iso}</td>
+                <td>${entry.grade}</td>
+                <td>${entry.carrier}</td>
+                <td>${entry.rego}</td>
+                <td>${entry.door_direction}</td>
+                <td><input type="text" value="${entry.container_number || ''}" data-id="${entry.id}" class="containerInput" style="width:100%;padding:5px;"></td>
+                <td><button class="completeBtn" data-id="${entry.id}" style="background:${entry.container_number ? '#dc3545' : '#ccc'};color:white;border:none;padding:5px 10px;border-radius:4px;" ${entry.container_number ? '' : 'disabled'}>Complete</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        document.querySelectorAll('.containerInput').forEach(input => {
+            input.addEventListener('input', async (e) => {
+                const id = e.target.dataset.id;
+                const value = e.target.value.trim();
+                await supabaseClient.from('onsite').update({ container_number: value }).eq('id', id).eq('user_id', user.id);
+                const btn = e.target.closest('tr').querySelector('.completeBtn');
+                btn.disabled = !value;
+                btn.style.background = value ? '#dc3545' : '#ccc';
+            });
+        });
+
+        document.querySelectorAll('.completeBtn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const id = btn.dataset.id;
+                const { data: entry } = await supabaseClient.from('onsite').select('*').eq('id', id).single();
+
+                await supabaseClient.from('history').insert({
+                    user_id: user.id,
+                    ...entry,
+                    completed_at: new Date().toLocaleString(),
+                    completed_date: today
+                });
+
+                await supabaseClient.from('onsite').delete().eq('id', id).eq('user_id', user.id);
+                loadOnsite();
+                if (document.getElementById('history').classList.contains('active')) loadHistory();
+            });
+        });
     }
 
     async function loadHistory() {
