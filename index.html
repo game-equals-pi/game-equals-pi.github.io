@@ -147,26 +147,40 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// Supabase client
-const supabase = Supabase.createClient('https://xoxbmcfsawwibxdegznv.supabase.co', 'sb_publishable_PWIgfu7AZifTuNM-3CNlHA_D7wqFB7s');
+// Correct Supabase client
+const supabase = window.supabase.createClient(
+  'https://xoxbmcfsawwibxdegznv.supabase.co',
+  'sb_publishable_PWIgfu7AZifTuNM-3CNlHA_D7wqFB7s'
+);
 
 // Auth state
 let user = null;
 
-// Login / Sign up
+// Login / Sign up button
 document.getElementById('auth-btn').addEventListener('click', async () => {
     const email = document.getElementById('auth-email').value.trim();
     const password = document.getElementById('auth-password').value;
     const message = document.getElementById('auth-message');
 
-    if (!email || !password) return;
+    if (!email || !password) {
+        message.textContent = 'Enter email and password';
+        return;
+    }
 
-    // Try sign in first
+    message.textContent = 'Loading...';
+
+    // Try login first
     let { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error && error.message.includes('Invalid login')) {
-        // If not, sign up
+
+    if (error && error.message.includes('Invalid login credentials')) {
+        // If login fails, try signup
         ({ data, error } = await supabase.auth.signUp({ email, password }));
+        if (!error) {
+            message.textContent = 'Check your email to confirm signup!';
+            return;
+        }
     }
 
     if (error) {
@@ -179,49 +193,27 @@ document.getElementById('auth-btn').addEventListener('click', async () => {
     }
 });
 
-// Logout
-document.getElementById('logout-btn').addEventListener('click', async () => {
-    await supabase.auth.signOut();
-    location.reload();
-});
-
-// Check session on load
-supabase.auth.getSession().then(({ data }) => {
-    if (data.session) {
-        user = data.session.user;
+// Check if already logged in
+supabase.auth.getSession().then(({ data: { session } }) => {
+    if (session) {
+        user = session.user;
         document.getElementById('login-page').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
         initApp();
     }
 });
 
-// App init after login
+// Logout
+document.getElementById('logout-btn').addEventListener('click', async () => {
+    await supabase.auth.signOut();
+    location.reload();
+});
+
+// Placeholder for when logged in
 function initApp() {
-    const today = new Date().toISOString().split('T')[0];
-    const todayFull = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    document.getElementById('dateLabel').textContent = `Today: ${todayFull}`;
-
-    let bookingsDate = today;
-    let historyDate = today;
-
-    document.getElementById('bookingsDate').value = today;
-    document.getElementById('historyDate').value = today;
-
-    // Tab logic, renders, forms – same as before but with supabase calls instead of localStorage
-
-    // You'll need to replace all localStorage with supabase inserts/selects/updates
-
-    // Example for bookings render:
-    async function renderBookings() {
-        const { data } = await supabase.from('bookings').select('*').eq('user_id', user.id).eq('date', bookingsDate);
-        // then build table as before
-    }
-
-    // I’ll send the full script in the next message – this is getting long
+    alert('Logged in! Dashboard ready – full data sync coming in next update.');
+    // We'll add full Supabase sync in the next message
 }
-
-// For now, the structure is ready – test login first
-
 </script>
 </body>
 </html>
