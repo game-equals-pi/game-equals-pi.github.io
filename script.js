@@ -8,85 +8,94 @@ const supabaseClient = createClient(
 let user = null;
 let hideCompleted = false;
 
-// Theme – saved per user
-function loadTheme() {
-    if (!user) return;
-    const saved = localStorage.getItem(`theme_${user.id}`) || 'light';
-    document.body.className = '';
-    document.body.classList.add(saved);
-}
-
-function saveTheme(theme) {
-    if (!user) return;
-    localStorage.setItem(`theme_${user.id}`, theme);
-}
-
-// Settings dropdown
-document.getElementById('settingsBtn').addEventListener('click', (e) => {
-    e.stopPropagation();
-    document.getElementById('settingsDropdown').classList.toggle('active');
-});
-
-document.addEventListener('click', () => {
-    document.getElementById('settingsDropdown').classList.remove('active');
-});
-
-document.querySelectorAll('.settings-item').forEach(item => {
-    item.addEventListener('click', () => {
-        const theme = item.dataset.theme;
+// Wait for DOM to be ready
+document.addEventListener('DOMContentLoaded', () => {
+    // Theme functions
+    function loadTheme() {
+        if (!user) return;
+        const saved = localStorage.getItem(`theme_${user.id}`) || 'light';
         document.body.className = '';
-        document.body.classList.add(theme);
-        saveTheme(theme);
-    });
-});
-
-// Auth – mandatory
-document.getElementById('auth-btn').addEventListener('click', async () => {
-    const email = document.getElementById('auth-email').value.trim();
-    const password = document.getElementById('auth-password').value;
-    const message = document.getElementById('auth-message');
-
-    if (!email || !password) {
-        message.textContent = 'Fill in email and password';
-        return;
+        document.body.classList.add(saved);
     }
 
-    message.textContent = 'Loading...';
+    function saveTheme(theme) {
+        if (!user) return;
+        localStorage.setItem(`theme_${user.id}`, theme);
+    }
 
-    let { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    // Settings dropdown
+    document.getElementById('settingsBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        document.getElementById('settingsDropdown').classList.toggle('active');
+    });
 
-    if (error && error.message === 'Invalid login credentials') {
-        ({ data, error } = await supabaseClient.auth.signUp({ email, password }));
-        if (!error) {
-            message.textContent = 'Check your email for confirmation link!';
+    document.addEventListener('click', () => {
+        document.getElementById('settingsDropdown').classList.remove('active');
+    });
+
+    document.querySelectorAll('.settings-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const theme = item.dataset.theme;
+            document.body.className = '';
+            document.body.classList.add(theme);
+            saveTheme(theme);
+        });
+    });
+
+    // Auth – mandatory
+    document.getElementById('auth-btn').addEventListener('click', async () => {
+        const email = document.getElementById('auth-email').value.trim();
+        const password = document.getElementById('auth-password').value;
+        const message = document.getElementById('auth-message');
+
+        if (!email || !password) {
+            message.textContent = 'Fill in email and password';
             return;
         }
-    }
 
-    if (error) {
-        message.textContent = error.message;
-    } else {
-        user = data.user;
-        document.getElementById('login-page').style.display = 'none';
-        document.getElementById('dashboard').style.display = 'block';
-        loadTheme();
-        initApp();
-    }
-});
+        message.textContent = 'Loading...';
 
-supabaseClient.auth.getSession().then(({ data }) => {
-    if (data.session) {
-        user = data.session.user;
-        document.getElementById('login-page').style.display = 'none';
-        document.getElementById('dashboard').style.display = 'block';
-        loadTheme();
-        initApp();
-    }
-});
+        let { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
 
-document.getElementById('logout-btn').addEventListener('click', async () => {
-    await supabaseClient.auth.signOut();
-    location.reload();
+        if (error && error.message === 'Invalid login credentials') {
+            ({ data, error } = await supabaseClient.auth.signUp({ email, password }));
+            if (!error) {
+                message.textContent = 'Check your email for confirmation link!';
+                return;
+            }
+        }
+
+        if (error) {
+            message.textContent = error.message;
+        } else {
+            user = data.user;
+            document.getElementById('login-page').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            loadTheme();
+            initApp();
+        }
+    });
+
+    // Check for existing session
+    supabaseClient.auth.getSession().then(({ data }) => {
+        if (data.session) {
+            user = data.session.user;
+            document.getElementById('login-page').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            loadTheme();
+            initApp();
+        }
+    });
+
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+        await supabaseClient.auth.signOut();
+        location.reload();
+    });
+
+    // Now call initApp() for non-logged-in parts or after login
+    async function initApp() {
+        // ... keep your entire existing initApp() function here unchanged ...
+    }
 });
 
 // App
