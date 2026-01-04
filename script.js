@@ -91,7 +91,8 @@ document.getElementById('logout-btn').addEventListener('click', async () => {
 
 // App
 async function initApp() {
-    const today = new Date().toISOString().split('T')[0];
+  
+    const today = new Date().toLocaleDateString('en-CA', {timeZone: 'Pacific/Auckland'});
     const todayFull = new Date().toLocaleDateString('en-US', { timeZone: 'Pacific/Auckland', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     document.getElementById('dateLabel').textContent = `Today: ${todayFull}`;
 
