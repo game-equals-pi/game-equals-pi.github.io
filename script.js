@@ -75,7 +75,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Check existing session
     supabaseClient.auth.getSession().then(({ data }) => {
         if (data.session) {
             user = data.session.user;
@@ -268,35 +267,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             });
 
-            // Complete button – fixed and guaranteed to save to history
+            // Complete button – saves container number and moves to history
             document.querySelectorAll('.completeBtn').forEach(btn => {
                 btn.addEventListener('click', async () => {
                     const tr = btn.closest('tr');
                     const input = tr.querySelector('.containerInput');
                     const id = btn.dataset.id;
 
-                    // Save container number
                     const currentValue = input.value.trim();
                     if (currentValue) {
                         await supabaseClient.from('onsite').update({ container_number: currentValue }).eq('id', id);
                     }
 
-                    // Fetch fresh entry
                     const { data: entry } = await supabaseClient.from('onsite').select('*').eq('id', id).single();
 
-                    // Insert into history
                     await supabaseClient.from('history').insert({
                         ...entry,
                         completed_at: new Date().toLocaleString('en-NZ', { timeZone: 'Pacific/Auckland' }),
                         completed_date: today
                     });
 
-                    // Delete from onsite
                     await supabaseClient.from('onsite').delete().eq('id', id);
 
-                    // Refresh
                     loadOnsite();
-                    loadHistory();  // Force history refresh
+                    loadHistory();
                 });
             });
 
@@ -424,7 +418,7 @@ document.addEventListener('DOMContentLoaded', () => {
             loadBookings();
         });
 
-        // Real-time subscriptions
+        // Real-time
         supabaseClient.channel('public-bookings').on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => loadBookings()).subscribe();
         supabaseClient.channel('public-onsite').on('postgres_changes', { event: '*', schema: 'public', table: 'onsite' }, () => loadOnsite()).subscribe();
         supabaseClient.channel('public-history').on('postgres_changes', { event: '*', schema: 'public', table: 'history' }, () => loadHistory()).subscribe();
