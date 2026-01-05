@@ -162,29 +162,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const tr = document.createElement('tr');
                 if (booking.completed) tr.classList.add('completed-row');
-tr.innerHTML = `
-    <td>${booking.release}</td>
-    <td>${booking.shippingline}</td>
-    <td>${booking.iso}</td>
-    <td>${booking.grade}</td>
-    <td>${booking.carrier}</td>
-    <td style="text-align:center;"><input type="checkbox" ${booking.completed ? 'checked' : ''} disabled></td>
-    <td><button class="delete-btn" data-id="${booking.id}">×</button></td>
-`;
-tbody.appendChild(tr);
+                tr.innerHTML = `
+                    <td>${booking.release}</td>
+                    <td>${booking.shippingline}</td>
+                    <td>${booking.iso}</td>
+                    <td>${booking.grade}</td>
+                    <td>${booking.carrier}</td>
+                    <td style="text-align:center;"><input type="checkbox" ${booking.completed ? 'checked' : ''} disabled></td>
+                    <td><button class="delete-btn" data-id="${booking.id}">×</button></td>
+                `;
+                tbody.appendChild(tr);
 
-// Add note row if exists
-if (booking.note) {
-    const noteTr = document.createElement('tr');
-    noteTr.innerHTML = `<td colspan="7" style="padding-left:40px; font-style:italic; color:#555; background:#f9f9f9;">${booking.note}</td>`;
-    tbody.appendChild(noteTr);
-}
+                // Add note row if exists
+                if (booking.note && booking.note.trim() !== '') {
+                    const noteTr = document.createElement('tr');
+                    noteTr.innerHTML = `<td colspan="7" style="padding-left:40px; font-style:italic; color:#555; background:#f9f9f9;">${booking.note}</td>`;
+                    tbody.appendChild(noteTr);
+                }
+
                 tr.addEventListener('click', (e) => {
                     if (!e.target.classList.contains('delete-btn')) {
                         moveBookingToOnsite(booking);
                     }
                 });
-                tbody.appendChild(tr);
             });
 
             document.querySelectorAll('#bookingsBody .delete-btn').forEach(btn => {
@@ -238,6 +238,14 @@ if (booking.note) {
                     </td>
                 `;
                 tbody.appendChild(tr);
+
+                // Add note row if exists
+                if (entry.note && entry.note.trim() !== '') {
+                    const noteTr = document.createElement('tr');
+                    noteTr.style.background = '#f9f9f9';
+                    noteTr.innerHTML = `<td colspan="9" style="padding-left:40px; font-style:italic; color:#555;">${entry.note}</td>`;
+                    tbody.appendChild(noteTr);
+                }
             });
 
             document.querySelectorAll('.containerInput').forEach(input => {
@@ -365,22 +373,23 @@ if (booking.note) {
             document.getElementById('onsiteForm').reset();
         });
 
-document.getElementById('bookingForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const newBooking = {
-        date: bookingsDate,
-        release: document.getElementById('booking-release').value.trim().toUpperCase(),
-        shippingline: document.getElementById('booking-shippingline').value.trim().toUpperCase(),
-        iso: document.getElementById('booking-iso').value.trim().toUpperCase(),
-        grade: document.getElementById('booking-grade').value.trim().toUpperCase(),
-        carrier: document.getElementById('booking-carrier').value.trim().toUpperCase(),
-        completed: false,
-        note: document.getElementById('booking-note').value.trim() || null  // <-- new
-    };
-    await supabaseClient.from('bookings').insert(newBooking);
-    e.target.reset();
-    loadBookings();
-});
+        // Forms with note saving
+        document.getElementById('bookingForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newBooking = {
+                date: bookingsDate,
+                release: document.getElementById('booking-release').value.trim().toUpperCase(),
+                shippingline: document.getElementById('booking-shippingline').value.trim().toUpperCase(),
+                iso: document.getElementById('booking-iso').value.trim().toUpperCase(),
+                grade: document.getElementById('booking-grade').value.trim().toUpperCase(),
+                carrier: document.getElementById('booking-carrier').value.trim().toUpperCase(),
+                completed: false,
+                note: document.getElementById('booking-note').value.trim() || null
+            };
+            await supabaseClient.from('bookings').insert(newBooking);
+            e.target.reset();
+            loadBookings();
+        });
 
         document.getElementById('onsiteForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -394,8 +403,8 @@ document.getElementById('bookingForm').addEventListener('submit', async (e) => {
                 rego: document.getElementById('modal-rego').value.trim().toUpperCase(),
                 door_direction: document.getElementById('modal-doorDirection').value.trim().toUpperCase(),
                 container_number: '',
-                note: document.getElementById('modal-note').value.trim() || null  // <-- new };
-
+                note: document.getElementById('modal-note').value.trim() || null
+            };
             await supabaseClient.from('onsite').insert(newEntry);
 
             const { data: match } = await supabaseClient.from('bookings').select('id').eq('release', release).eq('date', today).eq('completed', false).limit(1);
