@@ -347,6 +347,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('modal-iso').value = b.iso;
                 document.getElementById('modal-grade').value = b.grade;
                 document.getElementById('modal-carrier').value = b.carrier;
+                document.getElementById('modal-note').value = b.note;  // ← this line adds the note
             }
         });
 
