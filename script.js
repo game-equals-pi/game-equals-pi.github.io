@@ -172,17 +172,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
                 tbody.appendChild(tr);
 
-                // Improved note row – wrapped in div for full styling
-                if (booking.note && booking.note.trim() !== '') {  // use 'booking' or 'entry'
+                // Note row – wrapped in div for full styling
+                if (booking.note && booking.note.trim() !== '') {
                     const noteTr = document.createElement('tr');
                     const noteTd = document.createElement('td');
-                    noteTd.colSpan = 7;  // 7 for Bookings, 9 for On Site
+                    noteTd.colSpan = 7;
                     noteTd.innerHTML = `<div class="note-content">${booking.note}</div>`;
                     noteTr.appendChild(noteTd);
                     tbody.appendChild(noteTr);
                 }
 
-                // Click to move to onsite – inside loop so 'booking' is in scope
+                // Click to move to onsite – inside loop
                 tr.addEventListener('click', (e) => {
                     if (!e.target.classList.contains('delete-btn')) {
                         moveBookingToOnsite(booking);
@@ -241,16 +241,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
                 tbody.appendChild(tr);
 
-              // Improved note row – wrapped in div for full styling
-              if (booking.note && booking.note.trim() !== '') {  // use 'booking' or 'entry'
-                  const noteTr = document.createElement('tr');
-                  const noteTd = document.createElement('td');
-                  noteTd.colSpan = 9;  // 7 for Bookings, 9 for On Site
-                  noteTd.innerHTML = `<div class="note-content">${booking.note}</div>`;
-                  noteTr.appendChild(noteTd);
-                  tbody.appendChild(noteTr);
-              }
-              
+                // Note row – wrapped in div for full styling
+                if (entry.note && entry.note.trim() !== '') {
+                    const noteTr = document.createElement('tr');
+                    const noteTd = document.createElement('td');
+                    noteTd.colSpan = 9;
+                    noteTd.innerHTML = `<div class="note-content">${entry.note}</div>`;
+                    noteTr.appendChild(noteTd);
+                    tbody.appendChild(noteTr);
+                }
             });
 
             // Container input handlers
