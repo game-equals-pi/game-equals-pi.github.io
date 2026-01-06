@@ -1,3 +1,19 @@
+:root {
+    --color-primary: #007bff;
+    --color-secondary: #6c757d;
+    --color-accent: #28a745;
+    --color-bg: #f4f4f4;
+    --color-text: #333333;
+}
+
+body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    transition: background 0.3s, color 0.3s;
+}
+
+/* Rest of your existing CSS goes below */
+
 body { font-family: Arial, sans-serif; margin: 0; background: #f4f4f4; transition: background 0.3s, color 0.3s; }
 .tabs {
     background: #333;
