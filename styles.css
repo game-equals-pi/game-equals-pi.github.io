@@ -5,7 +5,62 @@
     --color-bg: #f4f4f4;
     --color-text: #333333;
 }
+/* Force body and content to use variables */
+body {
+    background: var(--color-bg);
+    color: var(--color-text);
+}
 
+/* Main content areas */
+.content {
+    background: var(--color-bg);
+    color: var(--color-text);
+}
+
+/* Tables */
+table {
+    background: var(--color-bg);
+    color: var(--color-text);
+}
+
+th {
+    background: var(--color-primary);
+    color: white;
+}
+
+td {
+    color: var(--color-text);
+}
+
+/* Forms and labels */
+.add-container-form,
+form table {
+    background: transparent;
+    color: var(--color-text);
+}
+
+label {
+    color: var(--color-text);
+}
+
+/* Headers */
+h1, h2, h3, h4 {
+    color: var(--color-text);
+}
+
+/* Buttons */
+.form-buttons button {
+    color: white;
+}
+
+.form-buttons button[type="submit"] {
+    background: var(--color-accent);
+}
+
+#toggleCompleted {
+    background: var(--color-secondary);
+    color: white;
+}
 body {
     font-family: Arial, sans-serif;
     margin: 0;
