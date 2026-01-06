@@ -31,12 +31,44 @@
         <div class="date-label" id="dateLabel">Today: Loading...</div>
         <button id="logout-btn">Logout</button>
 
-        <div class="settings-dropdown" id="settingsDropdown">
-            <div class="settings-item" data-theme="light">☀️ Light Theme</div>
-            <div class="settings-item" data-theme="dark">🌙 Dark Theme</div>
-            <div class="settings-item" data-theme="ocean">🌊 Ocean Theme</div>
-            <div class="settings-item" data-theme="high-contrast">🔲 High Contrast</div>
-            <div class="settings-item" data-theme="blood">🩸 Blood Theme</div>
+<div class="settings-panel" id="settingsPanel">
+    <div class="settings-header">
+        <h3>Settings</h3>
+        <button class="close-settings">×</button>
+    </div>
+    <div class="settings-tabs">
+        <button class="settings-tab active" data-tab="ui">UI</button>
+        <button class="settings-tab" data-tab="role">Role</button>
+    </div>
+    <div class="settings-content">
+        <div id="ui-tab" class="tab-content active">
+            <h4>Custom Colors</h4>
+            <div class="color-picker-group">
+                <label>Primary Color</label>
+                <input type="color" id="color-primary" value="#007bff">
+            </div>
+            <div class="color-picker-group">
+                <label>Secondary Color</label>
+                <input type="color" id="color-secondary" value="#6c757d">
+            </div>
+            <div class="color-picker-group">
+                <label>Accent Color</label>
+                <input type="color" id="color-accent" value="#28a745">
+            </div>
+            <div class="color-picker-group">
+                <label>Background</label>
+                <input type="color" id="color-bg" value="#f4f4f4">
+            </div>
+            <div class="color-picker-group">
+                <label>Text Color</label>
+                <input type="color" id="color-text" value="#333333">
+            </div>
+            <button id="save-colors">Save Colors</button>
+            <button id="reset-colors">Reset to Default</button>
+        </div>
+        <div id="role-tab" class="tab-content">
+            <h4>User Role</h4>
+            <p>Coming soon...</p>
         </div>
     </div>
 
