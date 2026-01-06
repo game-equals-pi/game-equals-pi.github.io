@@ -22,75 +22,88 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem(`theme_${user.id}`, theme);
     }
 
-    // Settings dropdown
-   // Settings panel
-document.getElementById('settingsBtn').addEventListener('click', (e) => {
-    e.stopPropagation();
-    document.getElementById('settingsPanel').classList.toggle('active');
-});
-
-document.querySelector('.close-settings').addEventListener('click', () => {
-    document.getElementById('settingsPanel').classList.remove('active');
-});
-
-// Close when clicking outside
-document.addEventListener('click', (e) => {
-    const panel = document.getElementById('settingsPanel');
-    if (!panel.contains(e.target) && !document.getElementById('settingsBtn').contains(e.target)) {
-        panel.classList.remove('active');
-    }
-});
-
-// Tab switching inside settings
-document.querySelectorAll('.settings-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-        document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        tab.classList.add('active');
-        document.getElementById(tab.dataset.tab + '-tab').classList.add('active');
+    // Settings panel
+    document.getElementById('settingsBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        document.getElementById('settingsPanel').classList.toggle('active');
     });
-});
 
-// Custom colors
-const defaultColors = {
-    primary: '#007bff',
-    secondary: '#6c757d',
-    accent: '#28a745',
-    bg: '#f4f4f4',
-    text: '#333333'
-};
+    document.querySelector('.close-settings').addEventListener('click', () => {
+        document.getElementById('settingsPanel').classList.remove('active');
+    });
 
-function loadCustomColors() {
-    if (!user) return;
-    const saved = localStorage.getItem(`custom_colors_${user.id}`);
-    if (saved) {
-        const colors = JSON.parse(saved);
-        applyColors(colors);
-        updatePickerValues(colors);
-    } else {
-        applyColors(defaultColors);
+    // Close when clicking outside
+    document.addEventListener('click', (e) => {
+        const panel = document.getElementById('settingsPanel');
+        if (!panel.contains(e.target) && !document.getElementById('settingsBtn').contains(e.target)) {
+            panel.classList.remove('active');
+        }
+    });
+
+    // Tab switching inside settings
+    document.querySelectorAll('.settings-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById(tab.dataset.tab + '-tab').classList.add('active');
+        });
+    });
+
+    // Custom colors
+    const defaultColors = {
+        primary: '#007bff',
+        secondary: '#6c757d',
+        accent: '#28a745',
+        bg: '#f4f4f4',
+        text: '#333333'
+    };
+
+    function loadCustomColors() {
+        if (!user) return;
+        const saved = localStorage.getItem(`custom_colors_${user.id}`);
+        if (saved) {
+            const colors = JSON.parse(saved);
+            applyColors(colors);
+            updatePickerValues(colors);
+        } else {
+            applyColors(defaultColors);
+        }
     }
-}
 
-function applyColors(colors) {
-    document.documentElement.style.setProperty('--color-primary', colors.primary);
-    document.documentElement.style.setProperty('--color-secondary', colors.secondary);
-    document.documentElement.style.setProperty('--color-accent', colors.accent);
-    document.documentElement.style.setProperty('--color-bg', colors.bg);
-    document.documentElement.style.setProperty('--color-text', colors.text);
-}
+    function applyColors(colors) {
+        document.documentElement.style.setProperty('--color-primary', colors.primary);
+        document.documentElement.style.setProperty('--color-secondary', colors.secondary);
+        document.documentElement.style.setProperty('--color-accent', colors.accent);
+        document.documentElement.style.setProperty('--color-bg', colors.bg);
+        document.documentElement.style.setProperty('--color-text', colors.text);
+    }
 
-function updatePickerValues(colors) {
-    document.getElementById('color-primary').value = colors.primary;
-    document.getElementById('color-secondary').value = colors.secondary;
-    document.getElementById('color-accent').value = colors.accent;
-    document.getElementById('color-bg').value = colors.bg;
-    document.getElementById('color-text').value = colors.text;
-}
+    function updatePickerValues(colors) {
+        document.getElementById('color-primary').value = colors.primary;
+        document.getElementById('color-secondary').value = colors.secondary;
+        document.getElementById('color-accent').value = colors.accent;
+        document.getElementById('color-bg').value = colors.bg;
+        document.getElementById('color-text').value = colors.text;
+    }
 
-// Live preview
-['color-primary', 'color-secondary', 'color-accent', 'color-bg', 'color-text'].forEach(id => {
-    document.getElementById(id).addEventListener('input', (e) => {
+    // Live preview
+    ['color-primary', 'color-secondary', 'color-accent', 'color-bg', 'color-text'].forEach(id => {
+        document.getElementById(id).addEventListener('input', (e) => {
+            const colors = {
+                primary: document.getElementById('color-primary').value,
+                secondary: document.getElementById('color-secondary').value,
+                accent: document.getElementById('color-accent').value,
+                bg: document.getElementById('color-bg').value,
+                text: document.getElementById('color-text').value
+            };
+            applyColors(colors);
+        });
+    });
+
+    // Save button
+    document.getElementById('save-colors').addEventListener('click', () => {
+        if (!user) return;
         const colors = {
             primary: document.getElementById('color-primary').value,
             secondary: document.getElementById('color-secondary').value,
@@ -98,35 +111,17 @@ function updatePickerValues(colors) {
             bg: document.getElementById('color-bg').value,
             text: document.getElementById('color-text').value
         };
-        applyColors(colors);
+        localStorage.setItem(`custom_colors_${user.id}`, JSON.stringify(colors));
+        alert('Colors saved!');
     });
-});
 
-// Save button
-document.getElementById('save-colors').addEventListener('click', () => {
-    if (!user) return;
-    const colors = {
-        primary: document.getElementById('color-primary').value,
-        secondary: document.getElementById('color-secondary').value,
-        accent: document.getElementById('color-accent').value,
-        bg: document.getElementById('color-bg').value,
-        text: document.getElementById('color-text').value
-    };
-    localStorage.setItem(`custom_colors_${user.id}`, JSON.stringify(colors));
-    alert('Colors saved!');
-});
-
-// Reset button
-document.getElementById('reset-colors').addEventListener('click', () => {
-    if (!user) return;
-    localStorage.removeItem(`custom_colors_${user.id}`);
-    applyColors(defaultColors);
-    updatePickerValues(defaultColors);
-    alert('Colors reset to default');
-});
-
-// Load custom colors on login
-// Call loadCustomColors() after successful login and in getSession
+    // Reset button
+    document.getElementById('reset-colors').addEventListener('click', () => {
+        if (!user) return;
+        localStorage.removeItem(`custom_colors_${user.id}`);
+        applyColors(defaultColors);
+        updatePickerValues(defaultColors);
+        alert('Colors reset to default');
     });
 
     // Auth – mandatory
@@ -159,6 +154,7 @@ document.getElementById('reset-colors').addEventListener('click', () => {
             document.getElementById('login-page').style.display = 'none';
             document.getElementById('dashboard').style.display = 'block';
             loadTheme();
+            loadCustomColors();  // Load custom colors after login
             initApp();
         }
     });
@@ -169,6 +165,7 @@ document.getElementById('reset-colors').addEventListener('click', () => {
             document.getElementById('login-page').style.display = 'none';
             document.getElementById('dashboard').style.display = 'block';
             loadTheme();
+            loadCustomColors();  // Load custom colors on reload
             initApp();
         }
     });
@@ -260,7 +257,6 @@ document.getElementById('reset-colors').addEventListener('click', () => {
                 `;
                 tbody.appendChild(tr);
 
-                // Note row – wrapped in div for full styling
                 if (booking.note && booking.note.trim() !== '') {
                     const noteTr = document.createElement('tr');
                     const noteTd = document.createElement('td');
@@ -270,7 +266,6 @@ document.getElementById('reset-colors').addEventListener('click', () => {
                     tbody.appendChild(noteTr);
                 }
 
-                // Click to move to onsite – inside loop
                 tr.addEventListener('click', (e) => {
                     if (!e.target.classList.contains('delete-btn')) {
                         moveBookingToOnsite(booking);
@@ -329,7 +324,6 @@ document.getElementById('reset-colors').addEventListener('click', () => {
                 `;
                 tbody.appendChild(tr);
 
-                // Note row – wrapped in div for full styling
                 if (entry.note && entry.note.trim() !== '') {
                     const noteTr = document.createElement('tr');
                     const noteTd = document.createElement('td');
@@ -340,7 +334,6 @@ document.getElementById('reset-colors').addEventListener('click', () => {
                 }
             });
 
-            // Container input handlers
             document.querySelectorAll('.containerInput').forEach(input => {
                 input.addEventListener('input', (e) => {
                     const value = e.target.value.trim();
@@ -363,7 +356,6 @@ document.getElementById('reset-colors').addEventListener('click', () => {
                 });
             });
 
-            // Complete button
             document.querySelectorAll('.completeBtn').forEach(btn => {
                 btn.addEventListener('click', async () => {
                     const tr = btn.closest('tr');
@@ -390,7 +382,6 @@ document.getElementById('reset-colors').addEventListener('click', () => {
                 });
             });
 
-            // Delete button
             document.querySelectorAll('#onsiteBody .delete-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
