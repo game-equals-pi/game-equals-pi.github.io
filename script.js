@@ -89,10 +89,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return saved || 'dispatch';
     }
 
-    function showDashboard(role) {
-        document.querySelectorAll('.dashboard-view').forEach(view => view.classList.remove('active'));
-        document.getElementById(`${role}-dashboard`).classList.add('active');
-    }
+function showDashboard(role) {
+    document.querySelectorAll('.dashboard-view').forEach(view => view.classList.remove('active'));
+    document.getElementById(`${role}-dashboard`).classList.add('active');
+}
 
     document.getElementById('save-role').addEventListener('click', () => {
         if (!user) return;
@@ -187,6 +187,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Full app logic (only for dispatch role)
     async function initApp(role = 'dispatch') {
+
+      // Generic tab switching for all dashboards
+document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        const parentTabs = tab.closest('.tabs');
+        parentTabs.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        const targetId = tab.dataset.tab;
+        const parentView = tab.closest('.dashboard-view');
+        parentView.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+        document.getElementById(targetId).classList.add('active');
+    });
+});
+      
         if (role !== 'dispatch') return;
 
         const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Pacific/Auckland' });
