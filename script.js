@@ -250,7 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Only dispatch role has full logic
-        if (role !== 'dispatch') return;
+        if (role !== 'dispatch') {
 
         document.getElementById('toggleCompleted')?.addEventListener('click', (e) => {
             hideCompleted = !hideCompleted;
@@ -440,6 +440,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 tbody.appendChild(tr);
             });
         }
+      }
 
         function moveBookingToOnsite(booking) {
             document.querySelector('.tab[data-tab="onsite"]').click();
