@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Container Status - External View</title>
+    <link rel="stylesheet" href="styles.css"> <!-- Reuse your styles -->
+    <link rel="icon" href="/Ico updated.png" type="image/png">
+    <style>
+        body {
+            background: #f8f9fa;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: var(--color-primary);
+        }
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        table {
+            width: 100%;
+            margin-top: 20px;
+        }
+        .note-content {
+            font-style: italic;
+            color: #666;
+            background: #f0f0f0;
+            padding: 10px;
+            border-left: 4px solid var(--color-primary);
+            margin: 10px 0;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <button class="logout-btn" id="logout-btn">Logout</button>
+    <h1>Today's Completed Containers</h1>
+    <div id="status" class="loading">Loading...</div>
+    <table id="external-table" style="display:none;">
+        <thead>
+            <tr>
+                <th>Release Number</th>
+                <th>Shipping Line</th>
+                <th>Container Number</th>
+                <th>Rego</th>
+                <th>Completed At</th>
+                <th>Note</th>
+            </tr>
+        </thead>
+        <tbody id="external-body"></tbody>
+    </table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    const supabase = createClient(
+      'https://xoxbmcfsawwibxdegznv.supabase.co',
+      'sb_publishable_PWIgfu7AZifTuNM-3CNlHA_D7wqFB7s'
+    );
+
+    let user = null;
+
+    // Check session and role
+    async function init() {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+            alert('Please log in first');
+            window.location.href = 'index.html'; // redirect to main login
+            return;
+        }
+
+        user = session.user;
+
+        // Optional: check if user should be here
+        // You can add a 'role' field in profiles table later
+        // For now, anyone logged in can see this
+
+        document.getElementById('status').textContent = 'Loading completed containers...';
+        loadTodayCompleted();
+    }
+
+    async function loadTodayCompleted() {
+        const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Pacific/Auckland' });
+
+        const { data, error } = await supabase
+            .from('history')
+            .select('*')
+            .eq('completed_date', today)
+            .order('completed_at', { ascending: false });
+
+        if (error) {
+            document.getElementById('status').textContent = 'Error loading data';
+            console.error(error);
+            return;
+        }
+
+        const tbody = document.getElementById('external-body');
+        tbody.innerHTML = '';
+
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px; color:#666;">No containers completed today</td></tr>';
+        } else {
+            data.forEach(entry => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${entry.release || ''}</td>
+                    <td>${entry.shippingline || ''}</td>
+                    <td><strong>${entry.container_number || 'Not entered'}</strong></td>
+                    <td>${entry.rego || ''}</td>
+                    <td>${entry.completed_at || ''}</td>
+                    <td></td>
+                `;
+                tbody.appendChild(tr);
+
+                if (entry.note && entry.note.trim() !== '') {
+                    const noteTr = document.createElement('tr');
+                    const noteTd = document.createElement('td');
+                    noteTd.colSpan = 6;
+                    noteTd.innerHTML = `<div class="note-content">${entry.note}</div>`;
+                    noteTr.appendChild(noteTd);
+                    tbody.appendChild(noteTr);
+                }
+            });
+        }
+
+        document.getElementById('status').style.display = 'none';
+        document.getElementById('external-table').style.display = 'table';
+    }
+
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+        await supabase.auth.signOut();
+        window.location.href = 'index.html';
+    });
+
+    // Start
+    init();
+</script>
+
+</body>
+</html>
