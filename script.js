@@ -7,6 +7,8 @@ const supabaseClient = createClient(
 
 let user = null;
 let hideCompleted = false;
+let bookingsDate = '';
+let historyDate = '';
 
 document.addEventListener('DOMContentLoaded', () => {
     const defaultColors = {
@@ -94,14 +96,15 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById(`${role}-dashboard`).classList.add('active');
     }
 
-document.getElementById('user-role').addEventListener('change', function() {
-    if (!user) return;
-    const newRole = this.value;
-    localStorage.setItem(`user_role_${user.id}`, newRole);
-    currentRoleDisplay.textContent = newRole.charAt(0).toUpperCase() + newRole.slice(1);
-    showDashboard(newRole);
-    // No reload — instant switch
-});
+    // Instant role switch
+    document.getElementById('user-role').addEventListener('change', function() {
+        if (!user) return;
+        const newRole = this.value;
+        localStorage.setItem(`user_role_${user.id}`, newRole);
+        currentRoleDisplay.textContent = newRole.charAt(0).toUpperCase() + newRole.slice(1);
+        showDashboard(newRole);
+        initApp(newRole);
+    });
 
     // Settings panel
     document.getElementById('settingsBtn').addEventListener('click', (e) => {
@@ -189,16 +192,26 @@ document.getElementById('user-role').addEventListener('change', function() {
     // Full app logic
     async function initApp(role = 'dispatch') {
         // Set real date in header
-        const todayFull = new Date().toLocaleDateString('en-US', { 
-            timeZone: 'Pacific/Auckland', 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
+        const todayFull = new Date().toLocaleDateString('en-US', {
+            timeZone: 'Pacific/Auckland',
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
         });
         document.getElementById('dateLabel').textContent = `Today: ${todayFull}`;
 
-        // Generic tab switching for ALL dashboards
+        const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Pacific/Auckland' });
+        bookingsDate = today;
+        historyDate = today;
+
+        // Set default dates in pickers
+        const bookingsPicker = document.getElementById('bookingsDate');
+        const historyPicker = document.getElementById('historyDate');
+        if (bookingsPicker) bookingsPicker.value = today;
+        if (historyPicker) historyPicker.value = today;
+
+        // Generic tab switching + data load
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 const parentTabs = tab.closest('.tabs');
@@ -210,26 +223,31 @@ document.getElementById('user-role').addEventListener('change', function() {
                 const parentView = tab.closest('.dashboard-view');
                 parentView.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
                 document.getElementById(targetId).classList.add('active');
-              // Load data when tab is clicked
-        if (targetId === 'history') {
-            loadHistory();
-        } else if (targetId === 'bookings') {
-            loadBookings();
-        } else if (targetId === 'onsite') {
-            loadOnsite();
-        }
+
+                // Load data based on tab
+                if (targetId === 'bookings') loadBookings();
+                if (targetId === 'onsite') loadOnsite();
+                if (targetId === 'history') loadHistory();
             });
         });
 
+        // Date picker changes
+        if (bookingsPicker) {
+            bookingsPicker.addEventListener('change', (e) => {
+                bookingsDate = e.target.value;
+                loadBookings();
+            });
+        }
+
+        if (historyPicker) {
+            historyPicker.addEventListener('change', (e) => {
+                historyDate = e.target.value;
+                loadHistory();
+            });
+        }
+
         // Only run dispatch-specific logic if role is dispatch
         if (role !== 'dispatch') return;
-
-        const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Pacific/Auckland' });
-        let bookingsDate = today;
-        let historyDate = today;
-
-        document.getElementById('bookingsDate').value = today;
-        document.getElementById('historyDate').value = today;
 
         document.getElementById('toggleCompleted').addEventListener('click', (e) => {
             hideCompleted = !hideCompleted;
@@ -238,6 +256,7 @@ document.getElementById('user-role').addEventListener('change', function() {
             loadBookings();
         });
 
+        // All your render and load functions remain exactly the same
         function renderBookingsTable(data) {
             data.sort((a, b) => {
                 const carrierA = a.carrier.toUpperCase();
@@ -517,8 +536,9 @@ document.getElementById('user-role').addEventListener('change', function() {
         supabaseClient.channel('public-onsite').on('postgres_changes', { event: '*', schema: 'public', table: 'onsite' }, () => loadOnsite()).subscribe();
         supabaseClient.channel('public-history').on('postgres_changes', { event: '*', schema: 'public', table: 'history' }, () => loadHistory()).subscribe();
 
-        // Initial load for dispatch
+        // Initial load
         loadBookings();
         loadOnsite();
+        loadHistory(); // Ensure history loads on start too
     }
 });
