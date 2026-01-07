@@ -249,8 +249,11 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Only dispatch role has full logic
+        // Dispatch-specific logic
         if (role !== 'dispatch') {
+            // Non-dispatch roles – no data load needed yet
+            return;
+        }
 
         document.getElementById('toggleCompleted')?.addEventListener('click', (e) => {
             hideCompleted = !hideCompleted;
@@ -440,7 +443,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 tbody.appendChild(tr);
             });
         }
-      }
 
         function moveBookingToOnsite(booking) {
             document.querySelector('.tab[data-tab="onsite"]').click();
@@ -534,7 +536,7 @@ document.addEventListener('DOMContentLoaded', () => {
             loadBookings();
         });
 
-        // Real-time (only once)
+        // Real-time subscriptions (only once)
         supabaseClient.channel('public-bookings').on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => loadBookings()).subscribe();
         supabaseClient.channel('public-onsite').on('postgres_changes', { event: '*', schema: 'public', table: 'onsite' }, () => loadOnsite()).subscribe();
         supabaseClient.channel('public-history').on('postgres_changes', { event: '*', schema: 'public', table: 'history' }, () => loadHistory()).subscribe();
