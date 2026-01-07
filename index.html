@@ -20,6 +20,17 @@
 
 <!-- Dashboard -->
 <div id="dashboard" style="display:none;">
+    <!-- Shared Header (visible on all roles) -->
+    <div class="shared-header">
+        <button class="settings-btn" id="settingsBtn">
+            <svg viewBox="0 0 24 24">
+                <path d="M19.14 12.94c.04-.3.06-.61.06-.92 0-.31-.02-.62-.06-.92l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.49.49 0 0 0-.5-.42h-3.84a.49.49 0 0 0-.5.42l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22l-1.92 3.32c-.12.22-.07.47.12.61l2.03 1.58c-.04.3-.06.61-.06.92 0 .31.02.62.06.92l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.42.5.42h3.84c.26 0 .45-.18.5-.42l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.07.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.03-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+            </svg>
+        </button>
+        <div class="date-label" id="dateLabel">Today: Loading...</div>
+        <button id="logout-btn">Logout</button>
+    </div>
+    
     <!-- Dispatch Dashboard (default) -->
     <div id="dispatch-dashboard" class="dashboard-view active">
         <div class="tabs">
@@ -101,11 +112,23 @@
     <div id="driver-dashboard" class="dashboard-view">
         <div class="tabs">
             <div class="tab active" data-tab="movements">Movements</div>
-            <div class="date-label">Today: Loading...</div>
         </div>
         <div id="movements" class="content active">
             <h1>My Movements Today</h1>
-            <p>Your assigned containers will appear here when implemented.</p>
+            <p>Your assigned containers will appear here.</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Release</th>
+                        <th>Shipping Line</th>
+                        <th>Container Number</th>
+                        <th>Rego</th>
+                        <th>Door Direction</th>
+                        <th>Note</th>
+                    </tr>
+                </thead>
+                <tbody id="movements-body"></tbody>
+            </table>
         </div>
     </div>
 
@@ -118,15 +141,19 @@
         </div>
         <div id="releases" class="content active">
             <h1>All Releases</h1>
-            <p>Admin view – coming soon.</p>
+            <p>Full list of today's releases across all carriers.</p>
+            <table>
+                <thead><tr><th>Release</th><th>Shipping Line</th><th>ISO</th><th>Grade</th><th>Carrier</th></tr></thead>
+                <tbody></tbody>
+            </table>
         </div>
         <div id="acceptances" class="content">
             <h1>Acceptances</h1>
-            <p>Admin view – coming soon.</p>
+            <p>Track which containers have been accepted on site.</p>
         </div>
         <div id="container-details" class="content">
             <h1>Container Details</h1>
-            <p>Admin view – coming soon.</p>
+            <p>Detailed view and history per container.</p>
         </div>
     </div>
 
