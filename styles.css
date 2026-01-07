@@ -507,3 +507,10 @@ th {
     font-style: normal;
     font-size: 15px;
 }
+.dashboard-view {
+    display: none;
+}
+
+.dashboard-view.active {
+    display: block;
+}
