@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Container Tracker</title>
+    <title>Container Pickup Report</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="icon" href="/Ico updated.png" type="image/png">
     <style>
@@ -14,47 +14,54 @@
             padding: 20px;
         }
         .container {
-            max-width: 900px;
-            margin: 40px auto;
+            max-width: 700px;
+            margin: 60px auto;
             background: white;
-            padding: 30px;
+            padding: 40px;
             border-radius: 16px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
         h1 {
             text-align: center;
             color: var(--color-primary, #007bff);
-            margin-bottom: 30px;
+            margin-bottom: 10px;
         }
-        .search-form {
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 18px;
+        }
+        .form-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-            margin-bottom: 30px;
+            gap: 20px;
         }
-        .search-form label {
+        label {
             font-weight: bold;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             display: block;
             color: #333;
         }
-        .search-form input {
+        .required::after {
+            content: " *";
+            color: #dc3545;
+        }
+        input[type="text"] {
             width: 100%;
-            padding: 12px 16px;
+            padding: 14px 16px;
             border: 1px solid #ccc;
             border-radius: 12px;
             font-size: 16px;
             box-sizing: border-box;
         }
         .form-buttons {
-            grid-column: 1 / -1;
             display: flex;
             gap: 15px;
             justify-content: center;
-            margin-top: 10px;
+            margin-top: 30px;
         }
         .form-buttons button {
-            padding: 12px 30px;
+            padding: 14px 32px;
             border: none;
             border-radius: 12px;
             font-size: 16px;
@@ -69,68 +76,43 @@
             background: #6c757d;
             color: white;
         }
-        #results {
-            margin-top: 40px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-        }
-        th, td {
-            padding: 14px 16px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        th {
-            background: #f8f9fa;
-            color: #444;
-            font-weight: 600;
-        }
-        .no-results {
+        #status {
             text-align: center;
-            padding: 60px;
-            color: #666;
+            margin-top: 30px;
             font-size: 18px;
+            min-height: 50px;
         }
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #666;
-        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Container Tracker</h1>
+    <h1>Container Pickup Report</h1>
+    <p class="subtitle">Let us know when you've collected your container</p>
 
-    <form id="searchForm" class="search-form">
+    <form id="pickupForm" class="form-grid">
         <div>
-            <label for="container">Container Number</label>
-            <input type="text" id="container" placeholder="e.g. MSKU1234567">
+            <label for="container" class="required">Container Number</label>
+            <input type="text" id="container" required placeholder="e.g. MSKU1234567">
         </div>
         <div>
             <label for="carrier">Carrier</label>
             <input type="text" id="carrier" placeholder="e.g. Maersk">
         </div>
         <div>
-            <label for="rego">Rego</label>
+            <label for="rego">Truck Rego</label>
             <input type="text" id="rego" placeholder="e.g. ABC123">
         </div>
 
         <div class="form-buttons">
-            <button type="submit" id="submit-btn">Search</button>
+            <button type="submit" id="submit-btn">Submit Report</button>
             <button type="button" id="clear-btn">Clear Form</button>
         </div>
     </form>
 
-    <div id="results">
-        <div class="loading">Enter details above and click Search</div>
-    </div>
+    <div id="status"></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -140,98 +122,44 @@
       'sb_publishable_PWIgfu7AZifTuNM-3CNlHA_D7wqFB7s'
     );
 
-    const resultsDiv = document.getElementById('results');
-    const form = document.getElementById('searchForm');
+    const form = document.getElementById('pickupForm');
+    const status = document.getElementById('status');
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
         const container = document.getElementById('container').value.trim().toUpperCase();
-        const carrier = document.getElementById('carrier').value.trim().toUpperCase();
-        const rego = document.getElementById('rego').value.trim().toUpperCase();
+        const carrier = document.getElementById('carrier').value.trim() || null;
+        const rego = document.getElementById('rego').value.trim() || null;
 
-        if (!container && !carrier && !rego) {
-            resultsDiv.innerHTML = '<div class="no-results">Please enter at least one field to search</div>';
+        if (!container) {
+            status.innerHTML = '<span class="error">Container Number is required</span>';
             return;
         }
 
-        resultsDiv.innerHTML = '<div class="loading">Searching...</div>';
+        status.innerHTML = 'Submitting report...';
+        status.className = '';
 
-        let query = supabase.from('history').select('*');
+        const { data, error } = await supabase
+            .from('pickup_reports')
+            .insert({
+                container_number: container,
+                carrier: carrier,
+                rego: rego
+            });
 
-        // Add filters if fields are filled
-        if (container) query = query.ilike('container_number', `%${container}%`);
-        if (carrier) query = query.ilike('carrier', `%${carrier}%`);
-        if (rego) query = query.ilike('rego', `%${rego}%`);
-
-        const { data: historyData, error: historyError } = await query;
-
-        // Also search onsite (in progress)
-        let onsiteQuery = supabase.from('onsite').select('*');
-        if (container) onsiteQuery = onsiteQuery.ilike('container_number', `%${container}%`);
-        if (carrier) onsiteQuery = onsiteQuery.ilike('carrier', `%${carrier}%`);
-        if (rego) onsiteQuery = onsiteQuery.ilike('rego', `%${rego}%`);
-
-        const { data: onsiteData, error: onsiteError } = await onsiteQuery;
-
-        if (historyError || onsiteError) {
-            resultsDiv.innerHTML = '<div class="no-results">Error loading data. Please try again.</div>';
-            console.error(historyError || onsiteError);
-            return;
+        if (error) {
+            console.error('Supabase error:', error);
+            status.innerHTML = '<span class="error">Failed to submit. Please try again.</span>';
+        } else {
+            status.innerHTML = '<span class="success">✓ Report submitted successfully! Thank you.</span>';
+            form.reset();
         }
-
-        const allResults = [
-            ...historyData.map(r => ({ ...r, status: 'Completed' })),
-            ...onsiteData.map(r => ({ ...r, status: 'On Site (In Progress)' }))
-        ];
-
-        if (allResults.length === 0) {
-            resultsDiv.innerHTML = '<div class="no-results">No matching containers found</div>';
-            return;
-        }
-
-        // Sort by most recent first
-        allResults.sort((a, b) => (b.completed_at || b.created_at || '').localeCompare(a.completed_at || a.created_at || ''));
-
-        let tableHTML = `
-            <table>
-                <thead>
-                    <tr>
-                        <th>Status</th>
-                        <th>Container Number</th>
-                        <th>Release</th>
-                        <th>Shipping Line</th>
-                        <th>Carrier</th>
-                        <th>Rego</th>
-                        <th>Completed At</th>
-                        <th>Note</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-
-        allResults.forEach(entry => {
-            tableHTML += `
-                <tr>
-                    <td><strong>${entry.status}</strong></td>
-                    <td><strong>${entry.container_number || 'Not entered'}</strong></td>
-                    <td>${entry.release || ''}</td>
-                    <td>${entry.shippingline || ''}</td>
-                    <td>${entry.carrier || ''}</td>
-                    <td>${entry.rego || ''}</td>
-                    <td>${entry.completed_at || ''}</td>
-                    <td>${entry.note ? `<div class="note-content">${entry.note}</div>` : ''}</td>
-                </tr>
-            `;
-        });
-
-        tableHTML += `</tbody></table>`;
-        resultsDiv.innerHTML = tableHTML;
     });
 
     document.getElementById('clear-btn').addEventListener('click', () => {
         form.reset();
-        resultsDiv.innerHTML = '<div class="loading">Enter details above and click Search</div>';
+        status.innerHTML = '';
     });
 </script>
 
