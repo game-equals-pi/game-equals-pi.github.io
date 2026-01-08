@@ -191,9 +191,79 @@ document.addEventListener('DOMContentLoaded', () => {
         location.reload();
     });
 
+    // Global form listeners (attached once)
+    document.getElementById('clear-booking')?.addEventListener('click', () => {
+        document.getElementById('bookingForm').reset();
+    });
+
+    document.getElementById('clear-onsite')?.addEventListener('click', () => {
+        document.getElementById('onsiteForm').reset();
+    });
+
+    document.getElementById('bookingForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const newBooking = {
+            date: bookingsDate,
+            release: document.getElementById('booking-release').value.trim().toUpperCase(),
+            shippingline: document.getElementById('booking-shippingline').value.trim().toUpperCase(),
+            iso: document.getElementById('booking-iso').value.trim().toUpperCase(),
+            grade: document.getElementById('booking-grade').value.trim().toUpperCase(),
+            carrier: document.getElementById('booking-carrier').value.trim().toUpperCase(),
+            completed: false,
+            note: document.getElementById('booking-note').value.trim() || null
+        };
+        await supabaseClient.from('bookings').insert(newBooking);
+        e.target.reset();
+        loadBookings();
+    });
+
+    // Onsite form listener — attached once (moved outside initApp)
+    document.getElementById('onsiteForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const release = document.getElementById('modal-release').value.trim().toUpperCase();
+        const newEntry = {
+            release,
+            shippingline: document.getElementById('modal-shippingline').value.trim().toUpperCase(),
+            iso: document.getElementById('modal-iso').value.trim().toUpperCase(),
+            grade: document.getElementById('modal-grade').value.trim().toUpperCase(),
+            carrier: document.getElementById('modal-carrier').value.trim().toUpperCase(),
+            rego: document.getElementById('modal-rego').value.trim().toUpperCase(),
+            door_direction: document.getElementById('modal-doorDirection').value.trim().toUpperCase(),
+            container_number: '',
+            note: document.getElementById('modal-note').value.trim() || null
+        };
+
+        await supabaseClient.from('onsite').insert(newEntry);
+
+        await supabaseClient.from('movements').insert({
+            carrier: newEntry.carrier,
+            rego: newEntry.rego,
+            shippingline: newEntry.shippingline,
+            iso: newEntry.iso,
+            grade: newEntry.grade,
+            container_number: '',
+            direction: 'outwards'
+        });
+
+        const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Pacific/Auckland' });
+        const { data: match } = await supabaseClient.from('bookings')
+            .select('id')
+            .eq('release', release)
+            .eq('date', today)
+            .eq('completed', false)
+            .limit(1);
+
+        if (match && match.length > 0) {
+            await supabaseClient.from('bookings').update({ completed: true }).eq('id', match[0].id);
+        }
+
+        e.target.reset();
+        loadOnsite();
+        loadBookings();
+    });
+
     // Full app logic
     async function initApp(role = 'dispatch') {
-        // Set real date in header
         const todayFull = new Date().toLocaleDateString('en-US', {
             timeZone: 'Pacific/Auckland',
             weekday: 'long',
@@ -205,107 +275,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Pacific/Auckland' });
 
-        // Initialize dates
         if (!bookingsDate) bookingsDate = today;
         if (!historyDate) historyDate = today;
 
-        // Set date pickers
         const bookingsPicker = document.getElementById('bookingsDate');
         const historyPicker = document.getElementById('historyDate');
         if (bookingsPicker) bookingsPicker.value = bookingsDate;
         if (historyPicker) historyPicker.value = historyDate;
 
-        // Generic tab switching + data load
+        // Generic tab switching
         document.querySelectorAll('.tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-        const parentTabs = tab.closest('.tabs');
-        if (!parentTabs) return;
-        parentTabs.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
+            tab.addEventListener('click', () => {
+                const parentTabs = tab.closest('.tabs');
+                if (!parentTabs) return;
+                parentTabs.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
 
-        const targetId = tab.dataset.tab;
-        const parentView = tab.closest('.dashboard-view');
-        parentView.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
-        document.getElementById(targetId).classList.add('active');
+                const targetId = tab.dataset.tab;
+                const parentView = tab.closest('.dashboard-view');
+                parentView.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+                document.getElementById(targetId).classList.add('active');
 
-        // Reset date picker to today when switching to Bookings or History
-        const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Pacific/Auckland' });
-        if (targetId === 'bookings') {
-            const picker = document.getElementById('bookingsDate');
-            if (picker) picker.value = today;
-            bookingsDate = today;
-            loadBookings();
-        } else if (targetId === 'history') {
-            const picker = document.getElementById('historyDate');
-            if (picker) picker.value = today;
-            historyDate = today;
-            loadHistory();
-        } else if (targetId === 'onsite') {
-            loadOnsite();
-        }
-      if (role === 'driver') {
-    loadMovements();
-    return;
-}
-
-// New loadMovements function (add this with your other load functions)
-async function loadMovements() {
-    const { data } = await supabaseClient.from('movements').select('*').order('created_at', { ascending: false });
-
-    const container = document.getElementById('movements-container');
-    container.innerHTML = '';
-
-    if (data.length === 0) {
-        container.innerHTML = '<p style="text-align:center; color:#666;">No movements yet.</p>';
-        return;
-    }
-
-    data.forEach(entry => {
-        const div = document.createElement('div');
-        div.classList.add('movement-entry', entry.direction);
-
-        let infoHTML = `
-            <div class="movement-info">
-                <p><strong>Carrier:</strong> ${entry.carrier || 'N/A'}</p>
-                <p><strong>Rego:</strong> ${entry.rego || 'N/A'}</p>
-                <p><strong>Shipping Line:</strong> ${entry.shippingline || 'N/A'}</p>
-                <p><strong>ISO:</strong> ${entry.iso || 'N/A'}</p>
-                <p><strong>Grade:</strong> ${entry.grade || 'N/A'}</p>
-                <p><strong>Container Number:</strong> ${entry.container_number || 'N/A'}</p>
-            </div>
-            <button class="complete-btn" data-id="${entry.id}">Complete</button>
-        `;
-
-        // For inwards (external): hide unnecessary fields
-        if (entry.direction === 'inwards') {
-            infoHTML = `
-                <div class="movement-info">
-                    <p><strong>Carrier:</strong> ${entry.carrier || 'N/A'}</p>
-                    <p><strong>Rego:</strong> ${entry.rego || 'N/A'}</p>
-                    <p><strong>Container Number:</strong> ${entry.container_number || 'N/A'}</p>
-                </div>
-                <button class="complete-btn" data-id="${entry.id}">Complete</button>
-            `;
-        }
-
-        div.innerHTML = infoHTML;
-        container.appendChild(div);
-    });
-
-    // Complete button listeners
-    document.querySelectorAll('.complete-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-            const id = btn.dataset.id;
-            await supabaseClient.from('movements').delete().eq('id', id);
-            loadMovements(); // Refresh
+                const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Pacific/Auckland' });
+                if (targetId === 'bookings') {
+                    if (bookingsPicker) bookingsPicker.value = today;
+                    bookingsDate = today;
+                    loadBookings();
+                } else if (targetId === 'history') {
+                    if (historyPicker) historyPicker.value = today;
+                    historyDate = today;
+                    loadHistory();
+                } else if (targetId === 'onsite') {
+                    loadOnsite();
+                }
+            });
         });
-    });
-}
-
-// Add to real-time subscriptions
-supabaseClient.channel('public-movements').on('postgres_changes', { event: '*', schema: 'public', table: 'movements' }, () => loadMovements()).subscribe();
-    });
-});
 
         // Date picker listeners
         if (bookingsPicker) {
@@ -322,11 +326,12 @@ supabaseClient.channel('public-movements').on('postgres_changes', { event: '*', 
             });
         }
 
-        // Dispatch-specific logic
-        if (role !== 'dispatch') {
-            // Non-dispatch roles – no data load needed yet
+        if (role === 'driver') {
+            loadMovements();
             return;
         }
+
+        if (role !== 'dispatch') return;
 
         document.getElementById('toggleCompleted')?.addEventListener('click', (e) => {
             hideCompleted = !hideCompleted;
@@ -558,75 +563,71 @@ supabaseClient.channel('public-movements').on('postgres_changes', { event: '*', 
             renderHistoryTable(data || []);
         }
 
-        document.getElementById('clear-booking')?.addEventListener('click', () => {
-            document.getElementById('bookingForm').reset();
-        });
+        // Driver movements
+        async function loadMovements() {
+            const { data } = await supabaseClient.from('movements').select('*').order('created_at', { ascending: false });
 
-        document.getElementById('clear-onsite')?.addEventListener('click', () => {
-            document.getElementById('onsiteForm').reset();
-        });
+            const container = document.getElementById('movements-container');
+            if (!container) return;
 
-        document.getElementById('bookingForm')?.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const newBooking = {
-                date: bookingsDate,
-                release: document.getElementById('booking-release').value.trim().toUpperCase(),
-                shippingline: document.getElementById('booking-shippingline').value.trim().toUpperCase(),
-                iso: document.getElementById('booking-iso').value.trim().toUpperCase(),
-                grade: document.getElementById('booking-grade').value.trim().toUpperCase(),
-                carrier: document.getElementById('booking-carrier').value.trim().toUpperCase(),
-                completed: false,
-                note: document.getElementById('booking-note').value.trim() || null
-            };
-            await supabaseClient.from('bookings').insert(newBooking);
-            e.target.reset();
-            loadBookings();
-        });
+            container.innerHTML = '';
 
-        document.getElementById('onsiteForm')?.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const release = document.getElementById('modal-release').value.trim().toUpperCase();
-            const newEntry = {
-                release,
-                shippingline: document.getElementById('modal-shippingline').value.trim().toUpperCase(),
-                iso: document.getElementById('modal-iso').value.trim().toUpperCase(),
-                grade: document.getElementById('modal-grade').value.trim().toUpperCase(),
-                carrier: document.getElementById('modal-carrier').value.trim().toUpperCase(),
-                rego: document.getElementById('modal-rego').value.trim().toUpperCase(),
-                door_direction: document.getElementById('modal-doorDirection').value.trim().toUpperCase(),
-                container_number: '',
-                note: document.getElementById('modal-note').value.trim() || null
-            };
-            await supabaseClient.from('onsite').insert(newEntry);
-
-            await supabaseClient.from('movements').insert({
-                carrier: newEntry.carrier,
-                rego: newEntry.rego,
-                shippingline: newEntry.shippingline,
-                iso: newEntry.iso,
-                grade: newEntry.grade,
-                container_number: newEntry.container_number,
-                direction: 'outwards'
-            });
-          
-            const { data: match } = await supabaseClient.from('bookings').select('id').eq('release', release).eq('date', today).eq('completed', false).limit(1);
-            if (match && match.length > 0) {
-                await supabaseClient.from('bookings').update({ completed: true }).eq('id', match[0].id);
+            if (data.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#666;">No movements yet.</p>';
+                return;
             }
 
-            e.target.reset();
-            loadOnsite();
-            loadBookings();
-        });
+            data.forEach(entry => {
+                const div = document.createElement('div');
+                div.classList.add('movement-entry', entry.direction);
 
-        // Real-time subscriptions (only once)
+                let infoHTML = '';
+                if (entry.direction === 'inwards') {
+                    infoHTML = `
+                        <div class="movement-info">
+                            <p><strong>Carrier:</strong> ${entry.carrier || 'N/A'}</p>
+                            <p><strong>Rego:</strong> ${entry.rego || 'N/A'}</p>
+                            <p><strong>Container Number:</strong> ${entry.container_number || 'N/A'}</p>
+                        </div>
+                        <button class="complete-btn" data-id="${entry.id}">Complete</button>
+                    `;
+                } else {
+                    infoHTML = `
+                        <div class="movement-info">
+                            <p><strong>Carrier:</strong> ${entry.carrier || 'N/A'}</p>
+                            <p><strong>Rego:</strong> ${entry.rego || 'N/A'}</p>
+                            <p><strong>Shipping Line:</strong> ${entry.shippingline || 'N/A'}</p>
+                            <p><strong>ISO:</strong> ${entry.iso || 'N/A'}</p>
+                            <p><strong>Grade:</strong> ${entry.grade || 'N/A'}</p>
+                            <p><strong>Container Number:</strong> ${entry.container_number || 'N/A'}</p>
+                        </div>
+                        <button class="complete-btn" data-id="${entry.id}">Complete</button>
+                    `;
+                }
+
+                div.innerHTML = infoHTML;
+                container.appendChild(div);
+            });
+
+            document.querySelectorAll('.complete-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const id = btn.dataset.id;
+                    await supabaseClient.from('movements').delete().eq('id', id);
+                    loadMovements();
+                });
+            });
+        }
+
+        // Real-time subscriptions
         supabaseClient.channel('public-bookings').on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => loadBookings()).subscribe();
         supabaseClient.channel('public-onsite').on('postgres_changes', { event: '*', schema: 'public', table: 'onsite' }, () => loadOnsite()).subscribe();
         supabaseClient.channel('public-history').on('postgres_changes', { event: '*', schema: 'public', table: 'history' }, () => loadHistory()).subscribe();
+        supabaseClient.channel('public-movements').on('postgres_changes', { event: '*', schema: 'public', table: 'movements' }, () => loadMovements()).subscribe();
 
         // Initial load
         loadBookings();
         loadOnsite();
         loadHistory();
+        if (role === 'driver') loadMovements();
     }
 });
