@@ -101,29 +101,15 @@
         </div>
     </div>
 
-    <!-- Driver Dashboard -->
-    <div id="driver-dashboard" class="dashboard-view">
-        <div class="tabs">
-            <div class="tab active" data-tab="movements">Movements</div>
-        </div>
-        <div id="movements" class="content active">
-            <h1>My Movements Today</h1>
-            <p>Your assigned containers will appear here.</p>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Release</th>
-                        <th>Shipping Line</th>
-                        <th>Container Number</th>
-                        <th>Rego</th>
-                        <th>Door Direction</th>
-                        <th>Note</th>
-                    </tr>
-                </thead>
-                <tbody id="movements-body"></tbody>
-            </table>
-        </div>
+<!-- Driver Dashboard -->
+<div id="driver-dashboard" class="dashboard-view">
+    <div class="tabs">
+        <div class="tab active" data-tab="movements">Truck Movements</div>
     </div>
+    <div id="movements" class="content active">
+        <div id="movements-container"></div> <!-- Entries here as divs -->
+    </div>
+</div>
 
     <!-- Admin Dashboard -->
     <div id="admin-dashboard" class="dashboard-view">
