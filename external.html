@@ -24,13 +24,7 @@
         h1 {
             text-align: center;
             color: var(--color-primary, #007bff);
-            margin-bottom: 10px;
-        }
-        .subtitle {
-            text-align: center;
-            color: #666;
             margin-bottom: 40px;
-            font-size: 18px;
         }
         .form-grid {
             display: grid;
@@ -90,24 +84,23 @@
 
 <div class="container">
     <h1>Container Pickup Report</h1>
-    <p class="subtitle">Let us know when you've collected your container</p>
 
-    <form id="pickupForm" class="form-grid">
+    <form id="pickupForm" class="form-grid" autocomplete="off">
         <div>
             <label for="container" class="required">Container Number</label>
-            <input type="text" id="container" required placeholder="e.g. MSKU1234567">
+            <input type="text" id="container" name="container" required autocomplete="off">
         </div>
         <div>
             <label for="carrier">Carrier</label>
-            <input type="text" id="carrier" placeholder="e.g. Maersk">
+            <input type="text" id="carrier" name="carrier" autocomplete="off">
         </div>
         <div>
             <label for="rego">Truck Rego</label>
-            <input type="text" id="rego" placeholder="e.g. ABC123">
+            <input type="text" id="rego" name="rego" autocomplete="off">
         </div>
 
         <div class="form-buttons">
-            <button type="submit" id="submit-btn">Submit Report</button>
+            <button type="submit" id="submit-btn">Submit</button>
             <button type="button" id="clear-btn">Clear Form</button>
         </div>
     </form>
@@ -117,7 +110,9 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-    const supabase = createClient(
+    // Create Supabase client only once
+    const { createClient } = supabase;
+    const supabaseClient = createClient(
       'https://xoxbmcfsawwibxdegznv.supabase.co',
       'sb_publishable_PWIgfu7AZifTuNM-3CNlHA_D7wqFB7s'
     );
@@ -140,7 +135,7 @@
         status.innerHTML = 'Submitting report...';
         status.className = '';
 
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('pickup_reports')
             .insert({
                 container_number: container,
