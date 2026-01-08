@@ -219,67 +219,67 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Onsite form listener with optimistic update
-    document.getElementById('onsiteForm')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const release = document.getElementById('modal-release').value.trim().toUpperCase();
-        const newEntry = {
-            release,
-            shippingline: document.getElementById('modal-shippingline').value.trim().toUpperCase(),
-            iso: document.getElementById('modal-iso').value.trim().toUpperCase(),
-            grade: document.getElementById('modal-grade').value.trim().toUpperCase(),
-            carrier: document.getElementById('modal-carrier').value.trim().toUpperCase(),
-            rego: document.getElementById('modal-rego').value.trim().toUpperCase(),
-            door_direction: document.getElementById('modal-doorDirection').value.trim().toUpperCase(),
-            container_number: '',
-            note: document.getElementById('modal-note').value.trim() || null
-        };
+   document.getElementById('onsiteForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const release = document.getElementById('modal-release').value.trim().toUpperCase();
+    const newEntry = {
+        release,
+        shippingline: document.getElementById('modal-shippingline').value.trim().toUpperCase(),
+        iso: document.getElementById('modal-iso').value.trim().toUpperCase(),
+        grade: document.getElementById('modal-grade').value.trim().toUpperCase(),
+        carrier: document.getElementById('modal-carrier').value.trim().toUpperCase(),
+        rego: document.getElementById('modal-rego').value.trim().toUpperCase(),
+        door_direction: document.getElementById('modal-doorDirection').value.trim().toUpperCase(),
+        container_number: '',
+        note: document.getElementById('modal-note').value.trim() || null
+    };
 
-        // Optimistic add
-        const tempId = Date.now();
-        const optimisticEntry = { ...newEntry, id: tempId };
-        currentOnsiteData = [optimisticEntry, ...currentOnsiteData];
+    // Optimistic add — append to bottom
+    const tempId = Date.now();
+    const optimisticEntry = { ...newEntry, id: tempId };
+    currentOnsiteData = [...currentOnsiteData, optimisticEntry];  // ← Changed: append instead of prepend
+    renderOnsiteTable(currentOnsiteData);
+
+    const { data, error } = await supabaseClient.from('onsite').insert(newEntry).select().single();
+
+    if (error) {
+        alert('Failed to save. Please try again.');
+        currentOnsiteData = currentOnsiteData.filter(e => e.id !== tempId);
         renderOnsiteTable(currentOnsiteData);
+        return;
+    }
 
-        const { data, error } = await supabaseClient.from('onsite').insert(newEntry).select().single();
+    // Replace temp with real
+    currentOnsiteData = currentOnsiteData.map(e => e.id === tempId ? data : e);
+    renderOnsiteTable(currentOnsiteData);
 
-        if (error) {
-            alert('Failed to save. Please try again.');
-            currentOnsiteData = currentOnsiteData.filter(e => e.id !== tempId);
-            renderOnsiteTable(currentOnsiteData);
-            return;
-        }
-
-        // Replace temp with real
-        currentOnsiteData = currentOnsiteData.map(e => e.id === tempId ? data : e);
-        renderOnsiteTable(currentOnsiteData);
-
-        // Add to movements
-        await supabaseClient.from('movements').insert({
-            carrier: newEntry.carrier,
-            rego: newEntry.rego,
-            shippingline: newEntry.shippingline,
-            iso: newEntry.iso,
-            grade: newEntry.grade,
-            container_number: '',
-            direction: 'outwards'
-        });
-
-        // Mark booking completed
-        const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Pacific/Auckland' });
-        const { data: match } = await supabaseClient.from('bookings')
-            .select('id')
-            .eq('release', release)
-            .eq('date', today)
-            .eq('completed', false)
-            .limit(1);
-
-        if (match && match.length > 0) {
-            await supabaseClient.from('bookings').update({ completed: true }).eq('id', match[0].id);
-        }
-
-        e.target.reset();
-        loadBookings();
+    // Add to movements
+    await supabaseClient.from('movements').insert({
+        carrier: newEntry.carrier,
+        rego: newEntry.rego,
+        shippingline: newEntry.shippingline,
+        iso: newEntry.iso,
+        grade: newEntry.grade,
+        container_number: '',
+        direction: 'outwards'
     });
+
+    // Mark booking completed
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Pacific/Auckland' });
+    const { data: match } = await supabaseClient.from('bookings')
+        .select('id')
+        .eq('release', release)
+        .eq('date', today)
+        .eq('completed', false)
+        .limit(1);
+
+    if (match && match.length > 0) {
+        await supabaseClient.from('bookings').update({ completed: true }).eq('id', match[0].id);
+    }
+
+    e.target.reset();
+    loadBookings();
+});
 
     // Render and load functions — moved to top level
     function renderBookingsTable(data) {
