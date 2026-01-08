@@ -420,11 +420,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const { data: entry } = await supabaseClient.from('onsite').select('*').eq('id', id).single();
 
-                await supabaseClient.from('history').insert({
-                    ...entry,
-                    completed_at: new Date().toLocaleString('en-NZ', { timeZone: 'Pacific/Auckland' }),
-                    completed_date: today
-                });
+await supabaseClient.from('history').insert({
+    ...entry,
+    completed_at: new Date().toLocaleString('en-NZ', { timeZone: 'Pacific/Auckland' }),
+    completed_date: new Date().toLocaleDateString('en-CA', { timeZone: 'Pacific/Auckland' })
+});
 
                 await supabaseClient.from('onsite').delete().eq('id', id);
 
